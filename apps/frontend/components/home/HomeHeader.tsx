@@ -6,7 +6,6 @@ import { Button, Dropdown } from "antd";
 import { HomeAuthActions } from "@/components/home/HomeUserCard";
 
 const navItems = [
-  { label: "关于我们", href: "/about", hasMenu: true },
   { label: "服务内容", href: "/services", hasMenu: true },
   { label: "资讯活动", href: "/news", hasMenu: true },
   { label: "社区参与", href: "/community", hasMenu: true },
