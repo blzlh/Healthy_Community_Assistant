@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Modal } from "antd";
 
@@ -16,15 +15,21 @@ type UserProfileModalProps = {
 
 export function UserProfileModal({ open, onClose }: UserProfileModalProps) {
   const user = useAuthStore((state) => state.user);
-  const { loading, loadProfile, saveProfile } = useProfile();
-
-  useEffect(() => {
-    if (open) {
-      loadProfile();
-    }
-  }, [open, loadProfile]);
+  const { loading, saveProfile } = useProfile();
 
   const handleSubmit = async (payload: { name?: string; avatarUrl?: string }) => {
+    const nextName = (payload.name ?? "").trim();
+    const currentName = (user?.name ?? "").trim();
+    const nextAvatar = (payload.avatarUrl ?? "").trim();
+    const currentAvatar = (user?.avatarUrl ?? "").trim();
+
+    if (nextName === currentName && nextAvatar === currentAvatar) {
+      Toast.info({
+        message: "个人资料未发生变化",
+      });
+      return;
+    }
+
     const result = await saveProfile(payload);
     if (!result.ok) {
       Toast.error({
@@ -34,8 +39,7 @@ export function UserProfileModal({ open, onClose }: UserProfileModalProps) {
       return;
     }
     Toast.success({
-      title: "已更新",
-      message: "个人资料已保存",
+      message: "个人资料已更新",
     });
     onClose();
   };

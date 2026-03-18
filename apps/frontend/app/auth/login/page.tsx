@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
 
 import { Button } from "@/components/ui/shadcn/button";
@@ -14,6 +14,7 @@ import { Toast } from "@/components/ui/Toast/Toast";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") ?? "";
   const initialStep = searchParams.get("step") === "code" ? "code" : "email";
@@ -56,7 +57,9 @@ export default function LoginPage() {
         title: "登录失败",
         message: getLoginErrorMessage(result.message),
       });
+      return;
     }
+    router.push("/home");
   }
 
   async function resendCode() {

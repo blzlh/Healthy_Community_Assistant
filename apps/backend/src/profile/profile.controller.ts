@@ -29,7 +29,12 @@ export class ProfileController {
     if (!user?.id) {
       throw new UnauthorizedException('Invalid user');
     }
-    const profile = await this.profileService.getProfile(user.id);
+    let profile = await this.profileService.getProfile(user.id);
+    if (!profile) {
+      profile = await this.profileService.upsertProfile(user.id, {
+        email: user.email,
+      });
+    }
     return {
       user: {
         id: user.id,
@@ -58,6 +63,7 @@ export class ProfileController {
       throw new BadRequestException('name or avatarUrl is required');
     }
     const profile = await this.profileService.upsertProfile(user.id, {
+      email: user.email,
       name: body.name,
       avatarUrl: body.avatarUrl,
     });
