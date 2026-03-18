@@ -7,7 +7,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/shadcn/card";
 import { HeaderIcon } from "@/components/login_register/HeaderIcon";
 
 type AuthCardProps = {

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { OtpInput } from "@/components/ui/otp-input";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
+import { OtpInput } from "@/components/ui/shadcn/otp-input";
 import { AuthCard } from "@/components/login_register/AuthCard";
+import { Toast } from "@/components/ui/Toast/Toast";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
@@ -22,11 +23,18 @@ export default function LoginPage() {
   const {
     loading,
     resendLoading,
-    message,
     sendLoginEmailOtp,
     resendEmailOtp,
     confirmEmailOtp,
   } = useAuth();
+
+  const getLoginErrorMessage = (message?: string) => {
+    if (!message) return "请稍后再试";
+    if (message.toLowerCase().includes("user not found")) {
+      return "用户未注册";
+    }
+    return message;
+  };
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,17 +42,31 @@ export default function LoginPage() {
       const result = await sendLoginEmailOtp(email);
       if (result.ok) {
         setStep("code");
+      } else {
+        Toast.error({
+          title: "发送失败",
+          message: getLoginErrorMessage(result.message),
+        });
       }
       return;
     }
-    await confirmEmailOtp(email, code);
+    const result = await confirmEmailOtp(email, code);
+    if (!result.ok) {
+      Toast.error({
+        title: "登录失败",
+        message: getLoginErrorMessage(result.message),
+      });
+    }
   }
 
   async function resendCode() {
     if (!email) return;
     const result = await resendEmailOtp(email);
-    if (result.ok) {
-      setStep("code");
+    if (!result.ok) {
+      Toast.error({
+        title: "发送失败",
+        message: getLoginErrorMessage(result.message),
+      });
     }
   }
 
@@ -72,11 +94,6 @@ export default function LoginPage() {
               去注册
             </Link>
           </div>
-          {message ? (
-            <div className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300">
-              {message}
-            </div>
-          ) : null}
         </>
       }
     >
@@ -126,21 +143,21 @@ export default function LoginPage() {
               </>
             ) : null}
             <Button
-            type="submit"
-            disabled={loading || resendLoading}
-            className="h-11 w-full rounded-lg bg-white text-black hover:bg-zinc-200"
-          >
-            <Icon icon="material-symbols:mail-outline" className="h-4 w-4" />
-            {loading || resendLoading
-              ? step === "email"
-                ? "发送中..."
-                : resendLoading
-                ? "发送中..."
-                : "登录中..."
-              : step === "email"
-              ? "发送验证码"
-              : "登录"}
-          </Button>
+              type="submit"
+              disabled={loading || resendLoading}
+              className="h-11 w-full rounded-lg bg-white text-black hover:bg-zinc-200"
+            >
+              <Icon icon="material-symbols:mail-outline" className="h-4 w-4" />
+              {loading || resendLoading
+                ? step === "email"
+                  ? "发送中..."
+                  : resendLoading
+                  ? "发送中..."
+                  : "登录中..."
+                : step === "email"
+                ? "发送验证码"
+                : "登录"}
+            </Button>
           </div>
       </form>
     </AuthCard>
