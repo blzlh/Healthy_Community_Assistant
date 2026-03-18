@@ -14,7 +14,7 @@ export function HomeHeroSection() {
   return (
     <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
       <div className="flex h-full flex-col gap-6">
-        <div className="inline-flex items-center justify-center gap-2 w-[40%] rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80">
+        <div className="inline-flex items-center justify-center gap-2 w-[36%] rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80">
           AI 驱动的社区健康服务平台
         </div>
         <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
