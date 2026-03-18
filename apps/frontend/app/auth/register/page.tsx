@@ -5,16 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { AuthCard } from "@/components/login_register/AuthCard";
+import { Toast } from "@/components/ui/Toast/Toast";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const { loading, message, sendEmailOtp } = useAuth();
+  const { loading, sendEmailOtp } = useAuth();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,6 +23,11 @@ export default function RegisterPage() {
     if (result.ok) {
       const params = new URLSearchParams({ step: "code", email });
       router.push(`/auth/login?${params.toString()}`);
+    } else {
+      Toast.error({
+        title: "发送失败",
+        message: result.message ?? "请稍后再试",
+      });
     }
   }
 
@@ -38,11 +44,6 @@ export default function RegisterPage() {
               去登录
             </Link>
           </div>
-          {message ? (
-            <div className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-300">
-              {message}
-            </div>
-          ) : null}
         </>
       }
     >
