@@ -1,3 +1,5 @@
-export default function Home() {
-  return <main className="min-h-screen" />;
+import { Home } from "@/app/home/page";
+
+export default function Page() {
+  return <Home />;
 }
