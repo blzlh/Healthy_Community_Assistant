@@ -9,6 +9,7 @@ import {
   verifyOtp,
   type AuthResponse,
 } from "@/services/auth";
+import { fetchProfile } from "@/services/profile";
 import { useAuthStore } from "@/store/auth-store";
 
 type AuthResult = {
@@ -20,6 +21,7 @@ type AuthResult = {
 
 export function useAuth() {
   const setSession = useAuthStore((state) => state.setSession);
+  const updateUser = useAuthStore((state) => state.updateUser);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -88,6 +90,16 @@ export function useAuth() {
         const { data, status } = await verifyOtp(normalizedEmail, normalizedCode);
         if (data?.session || data?.user) {
           setSession(data.session, data.user);
+          const token = data.session?.access_token ?? "";
+          if (token) {
+            fetchProfile(token)
+              .then(({ data: profileData }) => {
+                if (profileData?.user) {
+                  updateUser(profileData.user);
+                }
+              })
+              .catch(() => undefined);
+          }
         }
         setMessage(`${status} ${JSON.stringify(data)}`);
         return { ok: true, status, data };
@@ -99,7 +111,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [setSession]
+    [setSession, updateUser]
   );
 
   return {
