@@ -4,6 +4,7 @@ export type Database = {
       profiles: {
         Row: {
           user_id: string;
+          email: string | null;
           name: string | null;
           avatar_url: string | null;
           created_at: string | null;
@@ -11,6 +12,7 @@ export type Database = {
         };
         Insert: {
           user_id: string;
+          email?: string | null;
           name?: string | null;
           avatar_url?: string | null;
           created_at?: string | null;
@@ -18,6 +20,7 @@ export type Database = {
         };
         Update: {
           user_id?: string;
+          email?: string | null;
           name?: string | null;
           avatar_url?: string | null;
           created_at?: string | null;

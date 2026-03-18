@@ -4,6 +4,7 @@ import { DbService } from '../db/db.service';
 import { profiles } from '../db/schema';
 
 type UpdateProfileInput = {
+  email?: string;
   name?: string;
   avatarUrl?: string;
 };
@@ -25,6 +26,7 @@ export class ProfileService {
   // 更新用户个人资料
   async upsertProfile(userId: string, payload: UpdateProfileInput) {
     const updateSet: {
+      email?: string | null;
       name?: string | null;
       avatarUrl?: string | null;
       updatedAt: Date;
@@ -32,6 +34,9 @@ export class ProfileService {
       updatedAt: new Date(),
     };
 
+    if (payload.email !== undefined) {
+      updateSet.email = payload.email;
+    }
     if (payload.name !== undefined) {
       updateSet.name = payload.name;
     }
@@ -43,6 +48,7 @@ export class ProfileService {
       .insert(profiles)
       .values({
         userId,
+        email: payload.email ?? null,
         name: payload.name ?? null,
         avatarUrl: payload.avatarUrl ?? null,
       })
