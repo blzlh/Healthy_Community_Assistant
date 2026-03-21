@@ -55,7 +55,7 @@ export function ChatMessageList() {
       >
         {messages.map((msg) => {
           const isMe = msg.user.id === currentUser?.id;
-          const displayName = isMe ? "我" : msg.user.name ?? msg.user.email ?? msg.user.id;
+          const displayName = msg.user.name ?? msg.user.email ?? msg.user.id;
           const avatarUrl = isMe ? currentUser?.avatarUrl ?? msg.user.avatarUrl : msg.user.avatarUrl;
           const avatarFallbackSource = isMe
             ? currentUser?.name ?? currentUser?.email ?? "我"
