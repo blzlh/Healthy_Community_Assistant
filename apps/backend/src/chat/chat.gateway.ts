@@ -10,10 +10,15 @@ import {
 import { Logger } from '@nestjs/common';
 import type { DefaultEventsMap, Server, Socket } from 'socket.io';
 import { AuthService } from '../auth/auth.service';
+import { DbService } from '../db/db.service';
+import { chatHistory, profiles } from '../db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 type ChatUser = {
   id: string;
   email?: string | null;
+  name?: string | null;
+  avatarUrl?: string | null;
 };
 
 type SocketData = { user?: ChatUser };
@@ -53,9 +58,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server!: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
-  private readonly history = new Map<string, ChatMessage[]>();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly dbService: DbService,
+  ) {}
 
   async handleConnection(client: AuthedSocket) {
     const token = this.extractBearerToken(client);
@@ -73,14 +80,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      client.data.user = { id: user.id, email: user.email ?? null };
+      // 获取用户 Profile
+      const [profile] = await this.dbService.db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.userId, user.id))
+        .limit(1);
+
+      client.data.user = {
+        id: user.id,
+        email: user.email ?? null,
+        name: profile?.name ?? null,
+        avatarUrl: profile?.avatarUrl ?? null,
+      };
       await client.join('room:global');
       client.emit('chat:ready', {
         roomId: 'global',
         user: client.data.user,
       });
 
-      const history = this.history.get('global') ?? [];
+      const history = await this.getRoomHistory('global');
       client.emit('chat:history', { roomId: 'global', messages: history });
 
       this.logger.log(`connected socket=${client.id} user=${user.id}`);
@@ -115,14 +134,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await client.join(roomKey);
     client.emit('chat:joined', { roomId });
 
-    const history = this.history.get(roomId) ?? [];
+    const history = await this.getRoomHistory(roomId);
     client.emit('chat:history', { roomId, messages: history });
 
     this.logger.log(`join room=${roomId} socket=${client.id} user=${user.id}`);
   }
 
   @SubscribeMessage('chat:message')
-  sendMessage(
+  async sendMessage(
     @ConnectedSocket() client: AuthedSocket,
     @MessageBody() payload: ChatMessagePayload,
   ) {
@@ -139,22 +158,57 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    // 保存到数据库
+    const [inserted] = await this.dbService.db
+      .insert(chatHistory)
+      .values({
+        roomId,
+        userId: user.id,
+        name: user.name ?? null, // 存储姓名快照
+        text,
+      })
+      .returning();
+
     const message: ChatMessage = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      id: inserted.id,
       roomId,
       text,
-      createdAt: new Date().toISOString(),
+      createdAt: inserted.createdAt.toISOString(),
       user,
     };
-
-    const list = this.history.get(roomId) ?? [];
-    const next = [...list, message].slice(-50);
-    this.history.set(roomId, next);
 
     this.server.to(`room:${roomId}`).emit('chat:message', message);
     this.logger.log(
       `message room=${roomId} user=${user.id} len=${text.length}`,
     );
+  }
+
+  private async getRoomHistory(roomId: string): Promise<ChatMessage[]> {
+    const results = await this.dbService.db
+      .select({
+        id: chatHistory.id,
+        roomId: chatHistory.roomId,
+        text: chatHistory.text,
+        createdAt: chatHistory.createdAt,
+        user: {
+          id: chatHistory.userId,
+          email: profiles.email,
+          name: chatHistory.name, // 优先使用消息存储时的姓名快照
+          avatarUrl: profiles.avatarUrl,
+        },
+      })
+      .from(chatHistory)
+      .leftJoin(profiles, eq(chatHistory.userId, profiles.userId))
+      .where(eq(chatHistory.roomId, roomId))
+      .orderBy(desc(chatHistory.createdAt))
+      .limit(50);
+
+    return results
+      .map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+      }))
+      .reverse(); // 返回正序的历史记录
   }
 
   private extractBearerToken(client: Socket) {
