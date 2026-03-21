@@ -116,6 +116,53 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Ant Design Skeleton Dark Theme Support */
+.ant-skeleton.ant-skeleton-active .ant-skeleton-content .ant-skeleton-title,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-content .ant-skeleton-paragraph > li,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-avatar,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-button,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-input,
+.ant-skeleton.ant-skeleton-active .ant-skeleton-image {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 37%, rgba(255, 255, 255, 0.05) 63%) !important;
+  background-size: 400% 100% !important;
+}
+
+.chat-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 0;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 12px 6px 12px 0;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+  transition: background-color 150ms ease;
+}
+
+.chat-scroll.chat-scroll--active {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-width: none;
+}
+
+.chat-scroll.chat-scroll--active::-webkit-scrollbar {
+  width: 0;
+}
+
+.chat-scroll.chat-scroll--active::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

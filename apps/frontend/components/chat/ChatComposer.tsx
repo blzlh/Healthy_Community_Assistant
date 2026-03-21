@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, Input } from "antd";
+import { Icon } from "@iconify/react";
 
 type ChatComposerProps = {
   disabled?: boolean;
@@ -33,9 +34,8 @@ export function ChatComposer({ disabled, onSend }: ChatComposerProps) {
         disabled={disabled}
         onClick={send}
         className="!bg-zinc-800 !text-white hover:!bg-zinc-700"
-      >
-        发送
-      </Button>
+        icon={<Icon icon="mynaui:send-solid" />}
+      />
     </div>
   );
 }

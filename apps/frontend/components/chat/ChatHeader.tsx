@@ -12,7 +12,7 @@ export function ChatHeader() {
     <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
-          <Icon icon="healthicons:chat" className="h-5 w-5 text-white" />
+          <Icon icon="token:chat" className="h-7 w-7 text-white" />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-semibold">社区聊天</span>
