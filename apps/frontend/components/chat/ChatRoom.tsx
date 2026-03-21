@@ -4,13 +4,16 @@ import Link from "next/link";
 
 import { useChat } from "@/hooks/use-chat";
 import { useAuthStore } from "@/store/auth-store";
+import { useChatStore } from "@/store/chat-store";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatSkeleton } from "@/components/chat/ChatSkeleton";
 
 export function ChatRoom() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
+  const loading = useChatStore((state) => state.loading);
   const { sendMessage } = useChat();
 
   if (!hydrated) {
@@ -35,8 +38,8 @@ export function ChatRoom() {
   return (
     <div className="flex flex-col gap-4">
       <ChatHeader />
-      <ChatMessageList />
-      <ChatComposer onSend={sendMessage} />
+      {loading ? <ChatSkeleton /> : <ChatMessageList />}
+      <ChatComposer onSend={sendMessage} disabled={loading} />
     </div>
   );
 }

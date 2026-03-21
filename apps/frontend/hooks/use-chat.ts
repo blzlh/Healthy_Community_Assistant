@@ -37,6 +37,7 @@ export function useChat() {
   // --- Chat 状态 ---
   const roomId = useChatStore((state) => state.roomId);
   const setConnected = useChatStore((state) => state.setConnected);
+  const setLoading = useChatStore((state) => state.setLoading);
   const setHistory = useChatStore((state) => state.setHistory);
   const addMessage = useChatStore((state) => state.addMessage);
 
@@ -98,6 +99,7 @@ export function useChat() {
       // 连接层错误处理 (如握手失败)
       socket.on("connect_error", (error) => {
         setConnected(false);
+        setLoading(false);
         const message = error?.message ?? "连接异常";
         // 如果是 token 相关错误，尝试静默刷新
         if (refreshToken && isTokenError(message)) {
@@ -113,6 +115,7 @@ export function useChat() {
       // 业务层错误处理 (后端抛出的 chat:error)
       socket.on("chat:error", (payload: ChatErrorPayload) => {
         setConnected(false);
+        setLoading(false);
         const message = payload.message ?? "连接异常";
         
         // 策略：如果未重试过且是 token 问题，尝试断开并刷新一次 session
@@ -137,6 +140,7 @@ export function useChat() {
       // 关键：后端鉴权通过后会发出 ready，此时 join 才是安全的
       socket.on("chat:ready", () => {
         setConnected(true);
+        setLoading(true); // 切换房间或重新连接时开启 loading
         socket.emit("chat:join", { roomId });
       });
 
@@ -155,6 +159,7 @@ export function useChat() {
     function connectWithToken(accessToken: string) {
       if (!accessToken || cancelled) return;
       socketRef.current?.disconnect();
+      setLoading(true);
       
       const socket = io(options.url, {
         path: options.path,
@@ -244,6 +249,7 @@ export function useChat() {
       socketRef.current?.disconnect();
       socketRef.current = null;
       setConnected(false);
+      setLoading(false);
     };
   }, [
     token,
@@ -255,6 +261,7 @@ export function useChat() {
     connectionOptions,
     roomId,
     setConnected,
+    setLoading,
     setHistory,
     addMessage,
   ]);
