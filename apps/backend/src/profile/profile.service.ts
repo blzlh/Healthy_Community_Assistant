@@ -6,7 +6,7 @@ import { profiles } from '../db/schema';
 type UpdateProfileInput = {
   email?: string;
   name?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 };
 
 @Injectable()

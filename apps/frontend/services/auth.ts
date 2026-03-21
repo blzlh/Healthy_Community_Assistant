@@ -14,7 +14,7 @@ export type AuthUser = {
   id?: string;
   email?: string;
   name?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 };
 
 export type AuthResponse = {

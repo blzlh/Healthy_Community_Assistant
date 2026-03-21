@@ -17,11 +17,11 @@ export function UserProfileModal({ open, onClose }: UserProfileModalProps) {
   const user = useAuthStore((state) => state.user);
   const { loading, saveProfile } = useProfile();
 
-  const handleSubmit = async (payload: { name?: string; avatarUrl?: string }) => {
+  const handleSubmit = async (payload: { name?: string; avatarUrl?: string | null }) => {
     const nextName = (payload.name ?? "").trim();
     const currentName = (user?.name ?? "").trim();
-    const nextAvatar = (payload.avatarUrl ?? "").trim();
-    const currentAvatar = (user?.avatarUrl ?? "").trim();
+    const nextAvatar = payload.avatarUrl ?? null;
+    const currentAvatar = user?.avatarUrl ?? null;
 
     if (nextName === currentName && nextAvatar === currentAvatar) {
       Toast.info({

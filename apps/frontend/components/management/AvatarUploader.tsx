@@ -6,8 +6,8 @@ import type { UploadFile, UploadProps } from "antd";
 import { Icon } from "@iconify/react";
 
 type AvatarUploaderProps = {
-  value?: string;
-  onChange: (value?: string) => void;
+  value?: string | null;
+  onChange: (value?: string | null) => void;
 };
 
 export function AvatarUploader({ value, onChange }: AvatarUploaderProps) {
@@ -65,7 +65,7 @@ export function AvatarUploader({ value, onChange }: AvatarUploaderProps) {
         <button
           type="button"
           className="text-sm text-white/50 hover:text-white"
-          onClick={() => onChange(undefined)}
+          onClick={() => onChange(null)}
         >
           移除
         </button>

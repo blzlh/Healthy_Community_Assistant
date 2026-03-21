@@ -1,4 +1,4 @@
 export class UpdateProfileDto {
   name?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 }

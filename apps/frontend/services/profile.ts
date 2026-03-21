@@ -8,7 +8,7 @@ export type ProfileResponse = {
 
 export type ProfilePayload = {
   name?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 };
 
 export async function fetchProfile(token: string) {
