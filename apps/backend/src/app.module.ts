@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
+import { CommunityModule } from './community/community.module';
 import { DbModule } from './db/db.module';
 import { ProfileModule } from './profile/profile.module';
 
@@ -15,6 +16,7 @@ import { ProfileModule } from './profile/profile.module';
     }),
     AuthModule,
     ChatModule,
+    CommunityModule,
     DbModule,
     ProfileModule,
   ],
