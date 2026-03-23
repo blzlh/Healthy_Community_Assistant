@@ -93,6 +93,10 @@ export class CommunityService {
       .where(eq(profiles.userId, input.userId))
       .limit(1);
 
+    if (profile[0]?.isBanned) {
+      throw new ForbiddenException('Your account is banned and cannot post');
+    }
+
     const authorName = profile[0]?.name?.trim() || input.email || '匿名用户';
     const authorAvatarUrl = profile[0]?.avatarUrl ?? null;
 
@@ -143,6 +147,16 @@ export class CommunityService {
 
     if (existing[0].userId !== input.userId) {
       throw new ForbiddenException('You can only edit your own posts');
+    }
+
+    const profile = await this.dbService.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, input.userId))
+      .limit(1);
+
+    if (profile[0]?.isBanned) {
+      throw new ForbiddenException('Your account is banned and cannot edit posts');
     }
 
     const updated = await this.dbService.db
@@ -202,6 +216,10 @@ export class CommunityService {
       .where(eq(profiles.userId, input.userId))
       .limit(1);
 
+    if (profile[0]?.isBanned) {
+      throw new ForbiddenException('Your account is banned and cannot comment');
+    }
+
     const authorName = profile[0]?.name?.trim() || input.email || '匿名用户';
     const authorAvatarUrl = profile[0]?.avatarUrl ?? null;
 
@@ -237,6 +255,16 @@ export class CommunityService {
 
     if (existing.length === 0) {
       throw new NotFoundException('Post not found');
+    }
+
+    const profile = await this.dbService.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, userId))
+      .limit(1);
+
+    if (profile[0]?.isBanned) {
+      throw new ForbiddenException('Your account is banned and cannot like posts');
     }
 
     const currentLikes = existing[0].likes ?? [];

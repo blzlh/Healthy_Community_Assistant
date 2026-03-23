@@ -152,6 +152,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    // 检查是否被封禁
+    const [profile] = await this.dbService.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, user.id))
+      .limit(1);
+
+    if (profile?.isBanned) {
+      client.emit('chat:error', {
+        message: 'Your account is banned and cannot send messages',
+      });
+      return;
+    }
+
     const roomId = (payload.roomId ?? 'global').trim() || 'global';
     const text = (payload.text ?? '').trim();
     if (!text) {

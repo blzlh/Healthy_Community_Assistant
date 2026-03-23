@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Icon } from "@iconify/react";
 
 import { useChat } from "@/hooks/use-chat";
 import { useAuthStore } from "@/store/auth-store";
@@ -13,6 +14,7 @@ import { ChatSkeleton } from "@/components/chat/ChatSkeleton";
 export function ChatRoom() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
+  const user = useAuthStore((state) => state.user);
   const loading = useChatStore((state) => state.loading);
   const { sendMessage } = useChat();
 
@@ -39,7 +41,14 @@ export function ChatRoom() {
     <div className="flex flex-col gap-4">
       <ChatHeader />
       {loading ? <ChatSkeleton /> : <ChatMessageList />}
-      <ChatComposer onSend={sendMessage} disabled={loading} />
+      {user?.isBanned ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-200">
+          <Icon icon="lucide:alert-circle" className="h-4 w-4 shrink-0" />
+          <span>您的账号已被封禁，无法发送消息。如有疑问请联系管理员。</span>
+        </div>
+      ) : (
+        <ChatComposer onSend={sendMessage} disabled={loading} />
+      )}
     </div>
   );
 }

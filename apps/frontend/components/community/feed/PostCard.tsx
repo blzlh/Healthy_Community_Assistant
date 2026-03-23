@@ -31,6 +31,7 @@ export function PostCard({
     <article className="group relative rounded-xl border border-white/10 bg-black/30 p-4 transition-colors hover:bg-white/5">
       <PostHeader
         postId={post.id}
+        authorId={post.author.id}
         authorName={post.author.name}
         authorAvatarUrl={post.author.avatarUrl}
         createdAt={post.createdAt}

@@ -28,3 +28,32 @@ export async function updateProfile(token: string, payload: ProfilePayload) {
   });
   return { data: response.data, status: response.status };
 }
+
+export async function fetchAllUsers(token: string) {
+  const response = await http.get<{ users: AuthUser[] }>(
+    "/api/profile/admin/users",
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return { data: response.data, status: response.status };
+}
+
+export async function banUser(
+  token: string,
+  targetUserId: string,
+  isBanned: boolean
+) {
+  const response = await http.put<{ success: boolean }>(
+    "/api/profile/admin/ban",
+    { targetUserId, isBanned },
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return { data: response.data, status: response.status };
+}

@@ -93,6 +93,20 @@ export function CommunityComposer({
     );
   }
 
+  if (user?.isBanned) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-red-200">
+        <div className="flex items-center gap-2 text-base font-semibold">
+          <Icon icon="lucide:alert-circle" className="h-5 w-5" />
+          账号已被封禁
+        </div>
+        <p className="mt-2 text-sm text-red-200/70">
+          您的账号目前处于封禁状态，无法发布动态。如有疑问请联系管理员。
+        </p>
+      </div>
+    );
+  }
+
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <div className="mb-4 flex items-center justify-between">

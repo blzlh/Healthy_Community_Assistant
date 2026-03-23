@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { useMemo, useState } from "react";
 import { Avatar, Button, Dropdown } from "antd";
@@ -9,20 +10,26 @@ import { useAuthStore } from "@/store/auth-store";
 import { UserProfileModal } from "@/components/management/UserProfileModal";
 
 export function HomeAuthActions() {
+  const router = useRouter();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const clear = useAuthStore((state) => state.clear);
   const isAuthed = Boolean(token) && Boolean(user);
   const [open, setOpen] = useState(false);
 
-  const userMenuItems = useMemo(
-    () => [
+  const userMenuItems = useMemo(() => {
+    const items = [
       { key: "edit", label: "编辑资料" },
       { key: "profile", label: "个人中心" },
-      { key: "logout", label: "退出登录" },
-    ],
-    []
-  );
+    ];
+
+    if (user?.isAdmin) {
+      items.push({ key: "admin", label: "用户管理" });
+    }
+
+    items.push({ key: "logout", label: "退出登录" });
+    return items;
+  }, [user?.isAdmin]);
 
   if (!isAuthed) {
     return (
@@ -66,6 +73,9 @@ export function HomeAuthActions() {
             if (key === "edit") {
               setOpen(true);
             }
+            if (key === "admin") {
+              router.push("/admin/users");
+            }
           },
         }}
         styles={{
@@ -98,8 +108,15 @@ export function HomeAuthActions() {
             {(displayName || "U").slice(0, 1).toUpperCase()}
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold">{displayName}</span>
-            <span className="text-xs text-white/60">{displayEmail}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium">{displayName}</span>
+              {user?.isAdmin && (
+                <span className="inline-flex items-center rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
+                  管理员
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-white/50">{displayEmail}</span>
           </div>
           <Icon icon="material-symbols:keyboard-arrow-down" className="h-4 w-4" />
         </button>

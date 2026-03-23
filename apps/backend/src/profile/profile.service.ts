@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { profiles } from '../db/schema';
 
@@ -38,7 +38,7 @@ export class ProfileService {
       updateSet.email = payload.email;
     }
     if (payload.name !== undefined) {
-      updateSet.name = payload.name;
+      updateSet.name = payload.name?.trim() || payload.email || null;
     }
     if (payload.avatarUrl !== undefined) {
       updateSet.avatarUrl = payload.avatarUrl;
@@ -49,7 +49,7 @@ export class ProfileService {
       .values({
         userId,
         email: payload.email ?? null,
-        name: payload.name ?? null,
+        name: payload.name?.trim() || payload.email || null,
         avatarUrl: payload.avatarUrl ?? null,
       })
       .onConflictDoUpdate({
@@ -58,5 +58,22 @@ export class ProfileService {
       });
 
     return this.getProfile(userId);
+  }
+
+  // 设置封禁状态
+  async setBanStatus(userId: string, isBanned: boolean) {
+    await this.dbService.db
+      .update(profiles)
+      .set({ isBanned, updatedAt: new Date() })
+      .where(eq(profiles.userId, userId));
+    return this.getProfile(userId);
+  }
+
+  // 获取所有用户资料（仅管理员可用）
+  async listAllProfiles() {
+    return this.dbService.db
+      .select()
+      .from(profiles)
+      .orderBy(desc(profiles.createdAt));
   }
 }
