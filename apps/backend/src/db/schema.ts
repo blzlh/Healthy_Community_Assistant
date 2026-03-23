@@ -17,3 +17,14 @@ export const chatHistory = pgTable('chat_history', {
   text: text('text').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+export const communityPosts = pgTable('community_posts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull(),
+  authorName: text('author_name').notNull(),
+  authorAvatarUrl: text('author_avatar_url'),
+  contentJson: text('content_json').notNull(),
+  contentText: text('content_text').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+});
