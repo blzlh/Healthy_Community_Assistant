@@ -28,7 +28,7 @@ export function CommunityFeed() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const user = useAuthStore((state) => state.user);
-  const { loading, loadPosts } = useCommunity();
+  const { loading, loadPosts, toggleLike } = useCommunity();
   const [scope, setScope] = useState<"all" | "mine">("all");
   const [posts, setPosts] = useState<CommunityPost[]>([]);
 
@@ -44,6 +44,40 @@ export function CommunityFeed() {
     setPosts(result.posts ?? []);
   }, [loadPosts]);
 
+  // 处理点赞/取消点赞的交互（使用乐观更新方案）
+  const handleToggleLike = async (postId: string) => {
+    // 1. 记录当前状态，以便请求失败时回滚
+    const previousPosts = [...posts];
+
+    // 2. 立即更新 UI（乐观更新）
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id === postId) {
+          const newIsLiked = !post.isLiked;
+          return {
+            ...post,
+            isLiked: newIsLiked,
+            likesCount: newIsLiked ? post.likesCount + 1 : Math.max(0, post.likesCount - 1),
+          };
+        }
+        return post;
+      })
+    );
+
+    // 3. 发送实际请求到后端
+    const result = await toggleLike(postId);
+
+    // 4. 如果请求失败，回滚到之前的状态并提示用户
+    if (!result.ok) {
+      setPosts(previousPosts);
+      Toast.error({
+        title: "点赞失败",
+        message: result.message ?? "网络请求失败，请稍后重试",
+      });
+    }
+  };
+
+  // 根据当前视图模式（全部/我的）过滤显示的动态
   const visiblePosts = useMemo(() => {
     if (scope === "all") {
       return posts;
@@ -116,20 +150,64 @@ export function CommunityFeed() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {visiblePosts.map((post) => (
-              <article key={post.id} className="rounded-xl border border-white/10 bg-black/30 p-4">
-                <div className="mb-3 flex items-center gap-3">
-                  <Avatar src={post.author.avatarUrl} className="bg-zinc-700">
-                    {(post.author.name || "U").slice(0, 1).toUpperCase()}
-                  </Avatar>
-                  <div>
-                    <div className="text-sm font-medium text-white">{post.author.name}</div>
-                    <div className="text-xs text-white/50">{formatPublishTime(post.createdAt)}</div>
+            {visiblePosts.map((post) => {
+              const isOwnPost = user?.id === post.author.id;
+              return (
+                <article
+                  key={post.id}
+                  className="group relative rounded-xl border border-white/10 bg-black/30 p-4 transition-colors hover:bg-white/5"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar src={post.author.avatarUrl} className="bg-zinc-700">
+                        {(post.author.name || "U").slice(0, 1).toUpperCase()}
+                      </Avatar>
+                      <div>
+                        <div className="text-sm font-medium text-white">{post.author.name}</div>
+                        <div className="text-xs text-white/50">
+                          {formatPublishTime(post.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    {/* 仅对自己的动态显示编辑按钮 */}
+                    {isOwnPost && (
+                      <Link
+                        href={`/community/edit/${post.id}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white active:scale-90"
+                        title="编辑动态"
+                      >
+                        <Icon icon="material-symbols:edit-outline" className="h-4 w-4" />
+                      </Link>
+                    )}
                   </div>
-                </div>
-                <CommunityPostContent content={post.contentJson} />
-              </article>
-            ))}
+                  {/* 帖子内容渲染（Tiplap JSON 格式） */}
+                  <CommunityPostContent content={post.contentJson} images={post.images} />
+
+                  {/* 底部交互区：点赞计数 */}
+                  <div className="mt-4 flex items-center gap-4 border-t border-white/5 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLike(post.id)}
+                      className={`flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs transition-all active:scale-95 ${
+                        post.isLiked
+                          ? "text-red-500 bg-red-500/5"
+                          : "text-white/40 hover:bg-white/5 hover:text-red-400/80"
+                      }`}
+                    >
+                      <div className="relative flex h-4 w-4 items-center justify-center">
+                        <Icon
+                          icon={post.isLiked ? "material-symbols:favorite" : "material-symbols:favorite-outline"}
+                          className={`h-4 w-4 transition-all duration-300 ${
+                            post.isLiked ? "animate-heart-beat" : ""
+                          }`}
+                        />
+                      </div>
+                      <span className="font-medium">{post.likesCount || "点赞"}</span>
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

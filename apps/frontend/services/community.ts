@@ -11,9 +11,12 @@ export type CommunityPost = {
   id: string;
   contentJson: JSONContent;
   contentText: string;
+  images: string[];
   createdAt: string;
   updatedAt: string;
   author: CommunityAuthor;
+  likesCount: number;
+  isLiked: boolean;
 };
 
 type CommunityListResponse = {
@@ -38,9 +41,31 @@ export async function fetchCommunityPosts(token: string, scope: "all" | "mine") 
 
 export async function createCommunityPost(
   token: string,
-  payload: { contentJson: JSONContent; contentText: string }
+  payload: { contentJson: JSONContent; contentText: string; images?: string[] }
 ) {
   const response = await http.post<CommunityCreateResponse>("/api/community/posts", payload, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
+  return { data: response.data, status: response.status };
+}
+
+export async function updateCommunityPost(
+  token: string,
+  postId: string,
+  payload: { contentJson?: JSONContent; contentText?: string; images?: string[] }
+) {
+  const response = await http.post<CommunityCreateResponse>(`/api/community/posts/${postId}`, payload, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
+  return { data: response.data, status: response.status };
+}
+
+export async function togglePostLike(token: string, postId: string) {
+  const response = await http.post<{ isLiked: boolean }>(`/api/community/posts/${postId}/like`, {}, {
     headers: {
       authorization: `Bearer ${token}`,
     },
