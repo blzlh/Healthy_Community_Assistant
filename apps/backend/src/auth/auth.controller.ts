@@ -36,11 +36,13 @@ export class AuthController {
     body: {
       email?: string;
       name?: string;
+      isAdmin?: boolean;
       flow?: 'register' | 'login';
     },
   ) {
     const email = body.email?.trim();
     const name = body.name?.trim();
+    const isAdmin = body.isAdmin ?? false;
     const flow = body.flow ?? 'register';
 
     if (!email) {
@@ -50,8 +52,8 @@ export class AuthController {
     try {
       const data =
         flow === 'login'
-          ? await this.authService.sendLoginOtp(email)
-          : await this.authService.register(email, name);
+          ? await this.authService.sendLoginOtp(email, isAdmin)
+          : await this.authService.register(email, name, isAdmin);
       return { user: data.user, session: data.session };
     } catch (error) {
       throw toHttpException(error);
@@ -65,17 +67,19 @@ export class AuthController {
     body: {
       email?: string;
       code?: string;
+      isAdmin?: boolean;
     },
   ) {
     const email = body.email?.trim();
     const code = body.code?.trim() ?? '';
+    const isAdmin = body.isAdmin ?? false;
 
     if (!email || !code) {
       throw new BadRequestException('email and code are required');
     }
 
     try {
-      const data = await this.authService.login(email, code);
+      const data = await this.authService.login(email, code, isAdmin);
       return { user: data.user, session: data.session };
     } catch (error) {
       throw toHttpException(error);

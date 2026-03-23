@@ -3,6 +3,7 @@
 import { Button, Input } from "antd";
 
 import type { CommunityComment } from "@/services/community";
+import { useAuthStore } from "@/store/auth-store";
 
 export function CommentList({ comments }: { comments: CommunityComment[] }) {
   if (!comments.length) return null;
@@ -34,7 +35,17 @@ export function CommentComposer({
   onChange: (value: string) => void;
   onSubmit: () => void;
 }) {
+  const user = useAuthStore((state) => state.user);
   if (!visible) return null;
+
+  if (user?.isBanned) {
+    return (
+      <div className="mt-3 text-xs text-red-200/60">
+        账号已被封禁，无法评论。
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 flex items-center gap-2">
       <Input

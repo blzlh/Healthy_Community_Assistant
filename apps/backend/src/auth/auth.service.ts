@@ -22,12 +22,13 @@ export class AuthService {
   }
 
   // 注册用户
-  async register(email: string, name?: string) {
+  async register(email: string, name?: string, isAdmin: boolean = false) {
     const { data, error } = await this.supabase.auth.signInWithOtp({
       email,
-      options: name
-        ? { data: { name }, shouldCreateUser: true }
-        : { shouldCreateUser: true },
+      options: {
+        data: { name, isAdmin },
+        shouldCreateUser: true,
+      },
     });
 
     if (error) throw error;
@@ -35,7 +36,7 @@ export class AuthService {
   }
 
   // 发送登录OTP
-  async sendLoginOtp(email: string) {
+  async sendLoginOtp(email: string, isAdmin: boolean = false) {
     const admin = getSupabaseAdminClient() as SupabaseClient<Database> & {
       auth: {
         admin: {
@@ -44,7 +45,11 @@ export class AuthService {
             perPage?: number;
           }) => Promise<{
             data: {
-              users: Array<{ id: string; email?: string | null }>;
+              users: Array<{
+                id: string;
+                email?: string | null;
+                user_metadata?: { isAdmin?: boolean };
+              }>;
             } | null;
             error: { message?: string } | null;
           }>;
@@ -58,12 +63,21 @@ export class AuthService {
       throw new BadRequestException('user lookup failed');
     }
 
-    const exists =
-      listData?.users?.some(
-        (user) => user.email?.toLowerCase() === email.toLowerCase(),
-      ) ?? false;
-    if (!exists) {
+    const targetUser = listData?.users?.find(
+      (user) => user.email?.toLowerCase() === email.toLowerCase(),
+    );
+
+    if (!targetUser) {
       throw new BadRequestException('user not found');
+    }
+
+    // 校验身份：管理员不能登录普通用户，普通用户不能登录管理员
+    // 注册时身份存放在 user_metadata.isAdmin
+    const userIsAdmin = targetUser.user_metadata?.isAdmin ?? false;
+    if (userIsAdmin !== isAdmin) {
+      throw new BadRequestException(
+        isAdmin ? '该账号不是管理员账号' : '该账号是管理员账号，请在管理员入口登录',
+      );
     }
 
     const { data, error } = await this.supabase.auth.signInWithOtp({
@@ -76,7 +90,7 @@ export class AuthService {
   }
 
   // 登录用户
-  async login(email: string, token: string) {
+  async login(email: string, token: string, isAdmin?: boolean) {
     const { data, error } = await this.supabase.auth.verifyOtp({
       email,
       token,
@@ -86,14 +100,46 @@ export class AuthService {
     if (error) throw error;
 
     const userId = data.user?.id;
-    const name =
-      (data.user?.user_metadata as { name?: string } | undefined)?.name ?? null;
-    if (userId && name) {
+    const metadata = data.user?.user_metadata as
+      | { name?: string; isAdmin?: boolean }
+      | undefined;
+    const name = metadata?.name ?? null;
+
+    // 最终校验：确保登录时的角色与注册时（metadata 中存储的）一致
+    const registeredIsAdmin = metadata?.isAdmin ?? false;
+    if (isAdmin !== undefined && isAdmin !== registeredIsAdmin) {
+      throw new BadRequestException(
+        isAdmin ? '该账号不是管理员账号' : '该账号是管理员账号，请从管理员入口登录',
+      );
+    }
+
+    const finalIsAdmin = registeredIsAdmin;
+
+    if (userId) {
       const admin = getSupabaseAdminClient();
+
+      // 1. 先查询数据库中是否已有名字
+      const { data: profileData, error: profileFetchError } = await admin
+        .from('profiles')
+        .select('name')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileFetchError && profileFetchError.code !== 'PGRST116') {
+        // PGRST116 = no rows found, which is fine for a new user.
+        throw profileFetchError;
+      }
+
+      // 2. 决定最终的名字
+      // 优先级: 数据库中的名字 > 注册元数据中的名字 > 邮箱
+      const finalName = profileData?.name || name?.trim() || email;
+
       const { error: profileError } = await admin.from('profiles').upsert(
         {
           user_id: userId,
-          name,
+          email,
+          name: finalName,
+          is_admin: finalIsAdmin,
         },
         { onConflict: 'user_id' },
       );

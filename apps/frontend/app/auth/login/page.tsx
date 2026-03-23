@@ -18,9 +18,13 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") ?? "";
   const initialStep = searchParams.get("step") === "code" ? "code" : "email";
+  const initialIsAdmin = searchParams.get("isAdmin") === "true";
+
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
+  const [isAdmin, setIsAdmin] = useState(initialIsAdmin);
   const [step, setStep] = useState<"email" | "code">(initialStep);
+
   const {
     loading,
     resendLoading,
@@ -40,7 +44,7 @@ export default function LoginPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (step === "email") {
-      const result = await sendLoginEmailOtp(email);
+      const result = await sendLoginEmailOtp(email, isAdmin);
       if (result.ok) {
         setStep("code");
       } else {
@@ -51,7 +55,7 @@ export default function LoginPage() {
       }
       return;
     }
-    const result = await confirmEmailOtp(email, code);
+    const result = await confirmEmailOtp(email, code, isAdmin);
     if (!result.ok) {
       Toast.error({
         title: "登录失败",
@@ -64,7 +68,7 @@ export default function LoginPage() {
 
   async function resendCode() {
     if (!email) return;
-    const result = await resendEmailOtp(email);
+    const result = await resendEmailOtp(email, isAdmin);
     if (!result.ok) {
       Toast.error({
         title: "发送失败",
@@ -103,19 +107,50 @@ export default function LoginPage() {
       <form className="grid gap-4" onSubmit={handleSubmit}>
           {step === "email" ? (
             <div className="grid gap-4">
-              <Label htmlFor="email" className="text-zinc-300">
-                邮箱
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="name@work-email.com"
-                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-500"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
+              <div className="grid gap-2">
+                <Label htmlFor="email" className="text-zinc-300">
+                  邮箱
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@work-email.com"
+                  className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-500"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-zinc-300">登录身份</Label>
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    onClick={() => setIsAdmin(false)}
+                    className={`flex-1 h-10 transition-all ${
+                      !isAdmin
+                        ? "bg-white text-black hover:bg-zinc-200"
+                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <Icon icon="lucide:user" className="h-4 w-4" />
+                    普通用户
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setIsAdmin(true)}
+                    className={`flex-1 h-10 transition-all ${
+                      isAdmin
+                        ? "bg-white text-black hover:bg-zinc-200"
+                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <Icon icon="lucide:shield-check" className="h-4 w-4" />
+                    管理员
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : null}
           <div className="grid gap-3">

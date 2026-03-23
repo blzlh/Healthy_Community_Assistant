@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Put,
   Req,
@@ -41,6 +42,8 @@ export class ProfileController {
         email: user.email,
         name: profile?.name ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
+        isAdmin: profile?.isAdmin ?? false,
+        isBanned: profile?.isBanned ?? false,
       },
     };
   }
@@ -73,7 +76,72 @@ export class ProfileController {
         email: user.email,
         name: profile?.name ?? null,
         avatarUrl: profile?.avatarUrl ?? null,
+        isAdmin: profile?.isAdmin ?? false,
+        isBanned: profile?.isBanned ?? false,
       },
+    };
+  }
+
+  // 管理员封禁/解封用户
+  @UseGuards(SupabaseAuthGuard)
+  @Put('admin/ban')
+  async setBanStatus(
+    @Req()
+    request: {
+      user?: { id?: string; email?: string };
+    },
+    @Body() body: { targetUserId: string; isBanned: boolean },
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    // 检查当前用户是否是管理员
+    const adminProfile = await this.profileService.getProfile(user.id);
+    if (!adminProfile?.isAdmin) {
+      throw new ForbiddenException('Only admins can ban users');
+    }
+
+    if (!body.targetUserId) {
+      throw new BadRequestException('targetUserId is required');
+    }
+
+    await this.profileService.setBanStatus(body.targetUserId, body.isBanned);
+    return { success: true };
+  }
+
+  // 获取所有用户资料（仅管理员可用）
+  @UseGuards(SupabaseAuthGuard)
+  @Get('admin/users')
+  async listUsers(
+    @Req()
+    request: {
+      user?: { id?: string; email?: string };
+    },
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    // 检查当前用户是否是管理员
+    const adminProfile = await this.profileService.getProfile(user.id);
+    if (!adminProfile?.isAdmin) {
+      throw new ForbiddenException('Only admins can view user list');
+    }
+
+    const profiles = await this.profileService.listAllProfiles();
+    return {
+      users: profiles.map((p) => ({
+        id: p.userId,
+        email: p.email,
+        name: p.name,
+        avatarUrl: p.avatarUrl,
+        isAdmin: p.isAdmin,
+        isBanned: p.isBanned,
+        createdAt: p.createdAt.toISOString(),
+      })),
     };
   }
 }

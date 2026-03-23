@@ -29,65 +29,82 @@ export function useAuth() {
   const normalizeEmail = (email: string) => email.trim().toLowerCase();
   const normalizeCode = (code: string) => code.replace(/\s+/g, "");
 
-  const sendEmailOtp = useCallback(async (email: string): Promise<AuthResult> => {
-    const normalizedEmail = normalizeEmail(email);
-    setLoading(true);
-    setMessage("");
-    try {
-      const { data, status } = await sendOtp(normalizedEmail);
-      setMessage(`${status} ${JSON.stringify(data)}`);
-      return { ok: true, status, data };
-    } catch (error) {
-      const errorMessage = getAxiosErrorMessage(error);
-      setMessage(errorMessage);
-      return { ok: false, message: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const sendEmailOtp = useCallback(
+    async (email: string, isAdmin: boolean = false): Promise<AuthResult> => {
+      const normalizedEmail = normalizeEmail(email);
+      setLoading(true);
+      setMessage("");
+      try {
+        const { data, status } = await sendOtp(normalizedEmail, isAdmin);
+        setMessage(`${status} ${JSON.stringify(data)}`);
+        return { ok: true, status, data };
+      } catch (error) {
+        const errorMessage = getAxiosErrorMessage(error);
+        setMessage(errorMessage);
+        return { ok: false, message: errorMessage };
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const sendLoginEmailOtp = useCallback(async (email: string): Promise<AuthResult> => {
-    const normalizedEmail = normalizeEmail(email);
-    setLoading(true);
-    setMessage("");
-    try {
-      const { data, status } = await sendLoginOtp(normalizedEmail);
-      setMessage(`${status} ${JSON.stringify(data)}`);
-      return { ok: true, status, data };
-    } catch (error) {
-      const errorMessage = getAxiosErrorMessage(error);
-      setMessage(errorMessage);
-      return { ok: false, message: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const sendLoginEmailOtp = useCallback(
+    async (email: string, isAdmin: boolean = false): Promise<AuthResult> => {
+      const normalizedEmail = normalizeEmail(email);
+      setLoading(true);
+      setMessage("");
+      try {
+        const { data, status } = await sendLoginOtp(normalizedEmail, isAdmin);
+        setMessage(`${status} ${JSON.stringify(data)}`);
+        return { ok: true, status, data };
+      } catch (error) {
+        const errorMessage = getAxiosErrorMessage(error);
+        setMessage(errorMessage);
+        return { ok: false, message: errorMessage };
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const resendEmailOtp = useCallback(async (email: string): Promise<AuthResult> => {
-    const normalizedEmail = normalizeEmail(email);
-    setResendLoading(true);
-    setMessage("");
-    try {
-      const { data, status } = await sendLoginOtp(normalizedEmail);
-      setMessage(`${status} ${JSON.stringify(data)}`);
-      return { ok: true, status, data };
-    } catch (error) {
-      const errorMessage = getAxiosErrorMessage(error);
-      setMessage(errorMessage);
-      return { ok: false, message: errorMessage };
-    } finally {
-      setResendLoading(false);
-    }
-  }, []);
+  const resendEmailOtp = useCallback(
+    async (email: string, isAdmin: boolean = false): Promise<AuthResult> => {
+      const normalizedEmail = normalizeEmail(email);
+      setResendLoading(true);
+      setMessage("");
+      try {
+        const { data, status } = await sendLoginOtp(normalizedEmail, isAdmin);
+        setMessage(`${status} ${JSON.stringify(data)}`);
+        return { ok: true, status, data };
+      } catch (error) {
+        const errorMessage = getAxiosErrorMessage(error);
+        setMessage(errorMessage);
+        return { ok: false, message: errorMessage };
+      } finally {
+        setResendLoading(false);
+      }
+    },
+    []
+  );
 
   const confirmEmailOtp = useCallback(
-    async (email: string, code: string): Promise<AuthResult> => {
+    async (
+      email: string,
+      code: string,
+      isAdmin: boolean = false
+    ): Promise<AuthResult> => {
       const normalizedEmail = normalizeEmail(email);
       const normalizedCode = normalizeCode(code);
       setLoading(true);
       setMessage("");
       try {
-        const { data, status } = await verifyOtp(normalizedEmail, normalizedCode);
+        const { data, status } = await verifyOtp(
+          normalizedEmail,
+          normalizedCode,
+          isAdmin
+        );
         if (data?.session || data?.user) {
           setSession(data.session, data.user);
           const token = data.session?.access_token ?? "";
