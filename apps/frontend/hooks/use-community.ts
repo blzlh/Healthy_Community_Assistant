@@ -10,6 +10,7 @@ import {
   addPostComment,
   updateCommunityPost,
   togglePostLike,
+  deleteCommunityPost,
   type CommunityPost,
   type CommunityComment,
 } from "@/services/community";
@@ -129,6 +130,22 @@ export function useCommunity() {
     [token]
   );
 
+  const deletePost = useCallback(
+    async (postId: string): Promise<CommunityResult> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      try {
+        const { data, status } = await deleteCommunityPost(token, postId);
+        return { ok: true, status, ...data };
+      } catch (error) {
+        const message = getAxiosErrorMessage(error);
+        return { ok: false, message };
+      }
+    },
+    [token]
+  );
+
   return {
     loading,
     publishing,
@@ -137,5 +154,6 @@ export function useCommunity() {
     editPost,
     toggleLike,
     addComment,
+    deletePost,
   };
 }

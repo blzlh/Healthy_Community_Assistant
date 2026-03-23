@@ -22,6 +22,9 @@ type PostDraft = {
 export function CommunityComposer({
   postId,
   initialData,
+  showDeleteButton,
+  isDeleting,
+  onDelete,
 }: {
   postId?: string;
   initialData?: {
@@ -29,6 +32,9 @@ export function CommunityComposer({
     contentText: string;
     images: string[];
   };
+  showDeleteButton?: boolean;
+  isDeleting?: boolean;
+  onDelete?: () => void;
 }) {
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
@@ -161,7 +167,18 @@ export function CommunityComposer({
         </div>
       )}
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex items-center justify-end gap-3">
+        {showDeleteButton && (
+          <Button
+            danger
+            type="primary"
+            onClick={onDelete}
+            loading={isDeleting}
+            className="!bg-red-500/10 !text-red-400 !border-red-500/20 hover:!bg-red-500/20 hover:!border-red-500/30"
+          >
+            删除
+          </Button>
+        )}
         <Button
           type="primary"
           loading={publishing}
@@ -195,7 +212,7 @@ export function CommunityComposer({
             router.push("/community");
           }}
         >
-          {postId ? "保存修改" : "发布"}
+          {postId ? "保存" : "发布"}
         </Button>
       </div>
     </section>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Avatar, Button, Table, Tag, Modal, message } from "antd";
+import { useCallback, useEffect, useState } from "react";
+import { Avatar, Button, Modal, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { Toast } from "@/components/ui/Toast/Toast";
 import { Icon } from "@iconify/react";
 import { AdminGuard } from "@/components/auth/AdminGuard";
 import { useAuthStore } from "@/store/auth-store";
@@ -12,55 +14,102 @@ export default function AdminUsersPage() {
   const token = useAuthStore((state) => state.token);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const modalCancelButtonClass =
+    "!bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20";
+  const modalPrimaryOkButtonClass =
+    "!bg-zinc-800 !text-white hover:!bg-zinc-700";
+  const modalDangerOkButtonClass =
+    "!bg-red-500/10 !text-red-400 !border-red-500/20 hover:!bg-red-500/20 hover:!border-red-500/30";
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
       const { data } = await fetchAllUsers(token);
       setUsers(data.users || []);
     } catch (error) {
       console.error("Load users error:", error);
-      message.error("获取用户列表失败");
+      Toast.error({
+        title: "获取用户列表失败",
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
-    if (token) {
-      loadUsers();
-    }
-  }, [token]);
+    loadUsers();
+  }, [loadUsers]);
 
   const handleBanToggle = (user: AuthUser) => {
     const isBanning = !user.isBanned;
     Modal.confirm({
-      title: `${isBanning ? "封禁" : "解封"}用户 ${user.name || user.email}`,
-      content: isBanning 
-        ? "封禁后该用户将无法发布动态和在聊天室发言。确定要封禁吗？"
-        : "确定要解封该用户吗？",
+      centered: true,
+      title: (
+        <div className="font-semibold text-white">
+          {`${isBanning ? "封禁" : "解封"}用户 ${user.name || user.email}`}
+        </div>
+      ),
+      content: (
+        <div className="mt-1 text-sm text-white/60">
+          {isBanning
+            ? "封禁后该用户将无法发布动态和在聊天室发言。确定要封禁吗？"
+            : "确定要解封该用户吗？"}
+        </div>
+      ),
+      icon: (
+        <Icon
+          icon="ep:warn-triangle-filled"
+          className={`text-2xl text-yellow-400 pr-2 h-8 w-8`}
+        />
+      ),
       okText: "确定",
-      okType: isBanning ? "danger" : "primary",
       cancelText: "取消",
+      okType: isBanning ? "danger" : "primary",
+      okButtonProps: {
+        className: isBanning ? modalDangerOkButtonClass : modalPrimaryOkButtonClass,
+      },
+      cancelButtonProps: {
+        className: modalCancelButtonClass,
+      },
       onOk: async () => {
         try {
           if (!user.id) return;
           await banUser(token, user.id, isBanning);
-          message.success(`用户 ${user.name || user.email} 已${isBanning ? "封禁" : "解封"}`);
+          Toast.success({
+            title: `用户 ${user.name || user.email} 已${
+              isBanning ? "封禁" : "解封"
+            }`,
+          });
           loadUsers(); // 刷新列表
         } catch (error) {
           console.error("Ban user error:", error);
-          message.error("操作失败，请稍后重试");
+          Toast.error({
+            title: "操作失败",
+            message: "请稍后重试",
+          });
         }
+      },
+      classNames: {
+        container: "!bg-[#131212] border border-white/10",
+        header: "bg-[#131212] border-b border-white/10",
+        body: "bg-[#131212] text-white",
+        title: "text-white",
+        wrapper: "text-white",
+      },
+      styles: {
+        mask: {
+          background: "rgba(0,0,0,0.65)",
+        },
       },
     });
   };
 
-  const columns = [
+  const columns: ColumnsType<AuthUser> = [
     {
       title: "用户",
       key: "user",
-      render: (_: any, record: AuthUser) => (
+      render: (_, record) => (
         <div className="flex items-center gap-3">
           <Avatar src={record.avatarUrl} className="bg-zinc-700">
             {(record.name || record.email || "U").slice(0, 1).toUpperCase()}
@@ -75,7 +124,7 @@ export default function AdminUsersPage() {
     {
       title: "角色",
       key: "role",
-      render: (_: any, record: AuthUser) => (
+      render: (_, record) => (
         record.isAdmin ? (
           <Tag className="!bg-blue-500/10 !border-blue-500/20 !text-blue-400 !rounded-lg !px-2">管理员</Tag>
         ) : (
@@ -86,7 +135,7 @@ export default function AdminUsersPage() {
     {
       title: "状态",
       key: "status",
-      render: (_: any, record: AuthUser) => (
+      render: (_, record) => (
         record.isBanned ? (
           <Tag className="!bg-red-500/10 !border-red-500/20 !text-red-400 !rounded-lg !px-2">已封禁</Tag>
         ) : (
@@ -97,7 +146,7 @@ export default function AdminUsersPage() {
     {
       title: "操作",
       key: "action",
-      render: (_: any, record: AuthUser) => {
+      render: (_, record) => {
         if (record.isAdmin) return null; // 不允许封禁其他管理员
         return (
           <Button

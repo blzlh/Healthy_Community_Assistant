@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { Icon } from "@iconify/react";
-import { Avatar, Modal, message } from "antd";
+import { Avatar, Modal } from "antd";
 
 import { useAuthStore } from "@/store/auth-store";
 import { banUser } from "@/services/profile";
+import { Toast } from "@/components/ui/Toast/Toast";
 
 function formatPublishTime(value: string) {
   const date = new Date(value);
@@ -49,10 +50,15 @@ export function PostHeader({
       onOk: async () => {
         try {
           await banUser(token, authorId, true);
-          message.success(`用户 ${authorName} 已被封禁`);
+          Toast.success({
+            title: `用户 ${authorName} 已被封禁`,
+          });
         } catch (error) {
           console.error("Ban user error:", error);
-          message.error("封禁失败，请稍后重试");
+          Toast.error({
+            title: "封禁失败",
+            message: "请稍后重试",
+          });
         }
       },
     });

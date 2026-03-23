@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Spin } from "antd";
-
 import { Toast } from "@/components/ui/Toast/Toast";
 import { FeedHeader, type FeedScope } from "@/components/community/feed/FeedHeader";
 import { PostCard } from "@/components/community/feed/PostCard";
 import { useCommunity } from "@/hooks/use-community";
 import type { CommunityPost } from "@/services/community";
 import { useAuthStore } from "@/store/auth-store";
+import { CommunityFeedSkeleton } from "@/components/community/feed/CommunityFeedSkeleton";
 
 export function CommunityFeed() {
   const token = useAuthStore((state) => state.token);
@@ -180,9 +179,7 @@ export function CommunityFeed() {
         <FeedHeader scope={scope} onScopeChange={setScope} />
 
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Spin />
-          </div>
+          <CommunityFeedSkeleton />
         ) : visiblePosts.length === 0 ? (
           <div className="rounded-xl border border-dashed border-white/20 py-10 text-center text-sm text-white/60">
             暂无动态，发布第一条内容吧

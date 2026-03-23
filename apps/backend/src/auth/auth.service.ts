@@ -76,7 +76,9 @@ export class AuthService {
     const userIsAdmin = targetUser.user_metadata?.isAdmin ?? false;
     if (userIsAdmin !== isAdmin) {
       throw new BadRequestException(
-        isAdmin ? '该账号不是管理员账号' : '该账号是管理员账号，请在管理员入口登录',
+        isAdmin
+          ? '该账号不是管理员账号'
+          : '该账号是管理员账号，请在管理员入口登录',
       );
     }
 
@@ -109,7 +111,9 @@ export class AuthService {
     const registeredIsAdmin = metadata?.isAdmin ?? false;
     if (isAdmin !== undefined && isAdmin !== registeredIsAdmin) {
       throw new BadRequestException(
-        isAdmin ? '该账号不是管理员账号' : '该账号是管理员账号，请从管理员入口登录',
+        isAdmin
+          ? '该账号不是管理员账号'
+          : '该账号是管理员账号，请从管理员入口登录',
       );
     }
 

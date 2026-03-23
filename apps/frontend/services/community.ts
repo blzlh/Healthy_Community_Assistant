@@ -50,6 +50,18 @@ export async function fetchCommunityPosts(token: string, scope: "all" | "mine") 
   return { data: response.data, status: response.status };
 }
 
+export async function deleteCommunityPost(token: string, postId: string) {
+  const response = await http.delete<{ success: boolean }>(
+    `/api/community/posts/${postId}`,
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return { data: response.data, status: response.status };
+}
+
 export async function createCommunityPost(
   token: string,
   payload: { contentJson: JSONContent; contentText: string; images?: string[] }

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -103,6 +104,23 @@ export class CommunityController {
       images: body.images,
     });
     return { post };
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Delete('community/posts/:id')
+  async deletePost(
+    @Req()
+    request: {
+      user?: { id?: string };
+    },
+    @Param('id') id: string,
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    return await this.communityService.deletePost(user.id, id);
   }
 
   @UseGuards(SupabaseAuthGuard)

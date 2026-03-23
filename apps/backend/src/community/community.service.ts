@@ -156,7 +156,9 @@ export class CommunityService {
       .limit(1);
 
     if (profile[0]?.isBanned) {
-      throw new ForbiddenException('Your account is banned and cannot edit posts');
+      throw new ForbiddenException(
+        'Your account is banned and cannot edit posts',
+      );
     }
 
     const updated = await this.dbService.db
@@ -246,6 +248,28 @@ export class CommunityService {
     return { comment, commentsCount: nextComments.length };
   }
 
+  async deletePost(userId: string, postId: string) {
+    const existing = await this.dbService.db
+      .select()
+      .from(communityPosts)
+      .where(eq(communityPosts.id, postId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      throw new NotFoundException('Post not found');
+    }
+
+    if (existing[0].userId !== userId) {
+      throw new ForbiddenException('You can only delete your own posts');
+    }
+
+    await this.dbService.db
+      .delete(communityPosts)
+      .where(eq(communityPosts.id, postId));
+
+    return { success: true };
+  }
+
   async toggleLike(userId: string, postId: string) {
     const existing = await this.dbService.db
       .select()
@@ -264,7 +288,9 @@ export class CommunityService {
       .limit(1);
 
     if (profile[0]?.isBanned) {
-      throw new ForbiddenException('Your account is banned and cannot like posts');
+      throw new ForbiddenException(
+        'Your account is banned and cannot like posts',
+      );
     }
 
     const currentLikes = existing[0].likes ?? [];
