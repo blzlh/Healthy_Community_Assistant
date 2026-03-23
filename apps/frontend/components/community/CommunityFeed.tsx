@@ -1,36 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Icon } from "@iconify/react";
-import { Avatar, Segmented, Spin } from "antd";
+import { Spin } from "antd";
 
-import { CommunityPostContent } from "@/components/community/CommunityPostContent";
 import { Toast } from "@/components/ui/Toast/Toast";
+import { FeedHeader, type FeedScope } from "@/components/community/feed/FeedHeader";
+import { PostCard } from "@/components/community/feed/PostCard";
 import { useCommunity } from "@/hooks/use-community";
 import type { CommunityPost } from "@/services/community";
 import { useAuthStore } from "@/store/auth-store";
-
-function formatPublishTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 export function CommunityFeed() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const user = useAuthStore((state) => state.user);
-  const { loading, loadPosts, toggleLike } = useCommunity();
-  const [scope, setScope] = useState<"all" | "mine">("all");
+  const { loading, loadPosts, toggleLike, addComment } = useCommunity();
+  const [scope, setScope] = useState<FeedScope>("all");
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
+  const [commentTextByPost, setCommentTextByPost] = useState<Record<string, string>>({});
+  const [commentSubmitting, setCommentSubmitting] = useState<Record<string, boolean>>({});
+  const tempCommentSeqRef = useRef(0);
 
   const load = useCallback(async () => {
     const result = await loadPosts("all");
@@ -77,6 +68,73 @@ export function CommunityFeed() {
     }
   };
 
+  const handleToggleComments = (postId: string) => {
+    setOpenComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
+  const handleSubmitComment = async (postId: string) => {
+    const content = (commentTextByPost[postId] ?? "").trim();
+    if (!content) return;
+
+    const previousPosts = [...posts];
+    tempCommentSeqRef.current += 1;
+    const tempId = `temp-${tempCommentSeqRef.current}`;
+    const authorName = (user?.name ?? user?.email ?? "我").trim();
+    const authorAvatarUrl = user?.avatarUrl ?? null;
+    const userId = user?.id ?? "";
+
+    setOpenComments((prev) => ({ ...prev, [postId]: true }));
+    setCommentTextByPost((prev) => ({ ...prev, [postId]: "" }));
+    setCommentSubmitting((prev) => ({ ...prev, [postId]: true }));
+
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const nextComments = [
+          ...post.comments,
+          {
+            id: tempId,
+            userId,
+            authorName,
+            authorAvatarUrl,
+            content,
+            createdAt: "",
+          },
+        ];
+        return {
+          ...post,
+          comments: nextComments,
+          commentsCount: post.commentsCount + 1,
+        };
+      })
+    );
+
+    const result = await addComment(postId, content);
+    if (!result.ok || !result.comment) {
+      setPosts(previousPosts);
+      Toast.error({
+        title: "评论失败",
+        message: result.message ?? "网络请求失败，请稍后重试",
+      });
+      setCommentSubmitting((prev) => ({ ...prev, [postId]: false }));
+      return;
+    }
+
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+        const next = post.comments.map((c) => (c.id === tempId ? result.comment! : c));
+        return {
+          ...post,
+          comments: next,
+          commentsCount: result.commentsCount ?? next.length,
+        };
+      })
+    );
+
+    setCommentSubmitting((prev) => ({ ...prev, [postId]: false }));
+  };
+
   // 根据当前视图模式（全部/我的）过滤显示的动态
   const visiblePosts = useMemo(() => {
     if (scope === "all") {
@@ -119,26 +177,7 @@ export function CommunityFeed() {
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-lg font-semibold text-white">社区动态</div>
-          <Link
-            href="/community/new"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
-          >
-            <Icon icon="material-symbols:add" className="h-4 w-4" />
-            写动态
-          </Link>
-        </div>
-        <div className="mb-4 flex justify-end">
-          <Segmented
-            options={[
-              { label: "全部动态", value: "all" },
-              { label: "我的动态", value: "mine" },
-            ]}
-            value={scope}
-            onChange={(value) => setScope(value as "all" | "mine")}
-          />
-        </div>
+        <FeedHeader scope={scope} onScopeChange={setScope} />
 
         {loading ? (
           <div className="flex justify-center py-8">
@@ -152,60 +191,25 @@ export function CommunityFeed() {
           <div className="flex flex-col gap-4">
             {visiblePosts.map((post) => {
               const isOwnPost = user?.id === post.author.id;
+              const isCommentsOpen = Boolean(openComments[post.id]);
+              const commentText = commentTextByPost[post.id] ?? "";
+              const submitting = Boolean(commentSubmitting[post.id]);
               return (
-                <article
-                  key={post.id}
-                  className="group relative rounded-xl border border-white/10 bg-black/30 p-4 transition-colors hover:bg-white/5"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar src={post.author.avatarUrl} className="bg-zinc-700">
-                        {(post.author.name || "U").slice(0, 1).toUpperCase()}
-                      </Avatar>
-                      <div>
-                        <div className="text-sm font-medium text-white">{post.author.name}</div>
-                        <div className="text-xs text-white/50">
-                          {formatPublishTime(post.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                    {/* 仅对自己的动态显示编辑按钮 */}
-                    {isOwnPost && (
-                      <Link
-                        href={`/community/edit/${post.id}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white active:scale-90"
-                        title="编辑动态"
-                      >
-                        <Icon icon="material-symbols:edit-outline" className="h-4 w-4" />
-                      </Link>
-                    )}
-                  </div>
-                  {/* 帖子内容渲染（Tiplap JSON 格式） */}
-                  <CommunityPostContent content={post.contentJson} images={post.images} />
-
-                  {/* 底部交互区：点赞计数 */}
-                  <div className="mt-4 flex items-center gap-4 border-t border-white/5 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleLike(post.id)}
-                      className={`flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs transition-all active:scale-95 ${
-                        post.isLiked
-                          ? "text-red-500 bg-red-500/5"
-                          : "text-white/40 hover:bg-white/5 hover:text-red-400/80"
-                      }`}
-                    >
-                      <div className="relative flex h-4 w-4 items-center justify-center">
-                        <Icon
-                          icon={post.isLiked ? "material-symbols:favorite" : "material-symbols:favorite-outline"}
-                          className={`h-4 w-4 transition-all duration-300 ${
-                            post.isLiked ? "animate-heart-beat" : ""
-                          }`}
-                        />
-                      </div>
-                      <span className="font-medium">{post.likesCount || "点赞"}</span>
-                    </button>
-                  </div>
-                </article>
+                <div key={post.id}>
+                  <PostCard
+                    post={post}
+                    isOwnPost={isOwnPost}
+                    isCommentsOpen={isCommentsOpen}
+                    commentText={commentText}
+                    commentSubmitting={submitting}
+                    onToggleLike={() => handleToggleLike(post.id)}
+                    onToggleComments={() => handleToggleComments(post.id)}
+                    onChangeCommentText={(value) =>
+                      setCommentTextByPost((prev) => ({ ...prev, [post.id]: value }))
+                    }
+                    onSubmitComment={() => handleSubmitComment(post.id)}
+                  />
+                </div>
               );
             })}
           </div>

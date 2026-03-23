@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { CommunityService } from './community.service';
+import { AddCommunityCommentDto } from './dto/add-community-comment.dto';
 import { CreateCommunityPostDto } from './dto/create-community-post.dto';
 
 @Controller()
@@ -87,7 +88,7 @@ export class CommunityController {
       user?: { id?: string };
     },
     @Param('id') id: string,
-    @Body() body: CreateCommunityPostDto
+    @Body() body: CreateCommunityPostDto,
   ) {
     const user = request.user;
     if (!user?.id) {
@@ -111,7 +112,7 @@ export class CommunityController {
     request: {
       user?: { id?: string };
     },
-    @Param('id') id: string
+    @Param('id') id: string,
   ) {
     const user = request.user;
     if (!user?.id) {
@@ -119,5 +120,38 @@ export class CommunityController {
     }
 
     return await this.communityService.toggleLike(user.id, id);
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('community/posts/:id/comments')
+  async addComment(
+    @Req()
+    request: {
+      user?: { id?: string; email?: string | null };
+    },
+    @Param('id') id: string,
+    @Body() body: AddCommunityCommentDto,
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    const content = (body.content ?? '').trim();
+    if (!content) {
+      throw new BadRequestException('content is required');
+    }
+    if (content.length > 1000) {
+      throw new BadRequestException('content is too long');
+    }
+
+    const result = await this.communityService.addComment({
+      userId: user.id,
+      email: user.email,
+      postId: id,
+      content,
+    });
+
+    return result;
   }
 }

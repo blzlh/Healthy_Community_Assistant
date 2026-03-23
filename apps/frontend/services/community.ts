@@ -7,6 +7,15 @@ export type CommunityAuthor = {
   avatarUrl?: string | null;
 };
 
+export type CommunityComment = {
+  id: string;
+  userId: string;
+  authorName: string;
+  authorAvatarUrl?: string | null;
+  content: string;
+  createdAt: string;
+};
+
 export type CommunityPost = {
   id: string;
   contentJson: JSONContent;
@@ -17,6 +26,8 @@ export type CommunityPost = {
   author: CommunityAuthor;
   likesCount: number;
   isLiked: boolean;
+  commentsCount: number;
+  comments: CommunityComment[];
 };
 
 type CommunityListResponse = {
@@ -70,5 +81,18 @@ export async function togglePostLike(token: string, postId: string) {
       authorization: `Bearer ${token}`,
     },
   });
+  return { data: response.data, status: response.status };
+}
+
+export async function addPostComment(token: string, postId: string, content: string) {
+  const response = await http.post<{ comment: CommunityComment; commentsCount: number }>(
+    `/api/community/posts/${postId}/comments`,
+    { content },
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }
+  );
   return { data: response.data, status: response.status };
 }

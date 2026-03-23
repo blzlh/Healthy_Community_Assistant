@@ -7,9 +7,11 @@ import { getAxiosErrorMessage } from "@/services/auth";
 import {
   createCommunityPost,
   fetchCommunityPosts,
+  addPostComment,
   updateCommunityPost,
   togglePostLike,
   type CommunityPost,
+  type CommunityComment,
 } from "@/services/community";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -108,6 +110,25 @@ export function useCommunity() {
     [token]
   );
 
+  const addComment = useCallback(
+    async (
+      postId: string,
+      content: string
+    ): Promise<CommunityResult & { comment?: CommunityComment; commentsCount?: number }> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      try {
+        const { data, status } = await addPostComment(token, postId, content);
+        return { ok: true, status, comment: data.comment, commentsCount: data.commentsCount };
+      } catch (error) {
+        const message = getAxiosErrorMessage(error);
+        return { ok: false, message };
+      }
+    },
+    [token]
+  );
+
   return {
     loading,
     publishing,
@@ -115,5 +136,6 @@ export function useCommunity() {
     publishPost,
     editPost,
     toggleLike,
+    addComment,
   };
 }

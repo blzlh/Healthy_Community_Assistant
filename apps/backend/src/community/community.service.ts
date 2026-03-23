@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { desc, eq, and, sql } from 'drizzle-orm';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { desc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { communityPosts, profiles } from '../db/schema';
 
@@ -24,6 +29,15 @@ type UpdatePostInput = {
   images?: string[];
 };
 
+type CommunityComment = {
+  id: string;
+  userId: string;
+  authorName: string;
+  authorAvatarUrl?: string | null;
+  content: string;
+  createdAt: string;
+};
+
 @Injectable()
 export class CommunityService {
   constructor(private readonly dbService: DbService) {}
@@ -45,6 +59,7 @@ export class CommunityService {
 
       const posts = rows.map((row) => {
         const likes = row.likes ?? [];
+        const comments = this.parseComments(row.comments);
         return {
           id: row.id,
           contentJson: this.parseContentJson(row.contentJson),
@@ -59,6 +74,8 @@ export class CommunityService {
           },
           likesCount: likes.length,
           isLiked: likes.includes(options.userId),
+          commentsCount: comments.length,
+          comments,
         };
       });
 
@@ -89,6 +106,7 @@ export class CommunityService {
         contentText: input.contentText,
         images: input.images || [],
         likes: [],
+        comments: [],
       })
       .returning();
 
@@ -107,6 +125,8 @@ export class CommunityService {
       },
       likesCount: 0,
       isLiked: false,
+      commentsCount: 0,
+      comments: [],
     };
   }
 
@@ -128,7 +148,9 @@ export class CommunityService {
     const updated = await this.dbService.db
       .update(communityPosts)
       .set({
-        contentJson: input.contentJson ? JSON.stringify(input.contentJson) : undefined,
+        contentJson: input.contentJson
+          ? JSON.stringify(input.contentJson)
+          : undefined,
         contentText: input.contentText ?? undefined,
         images: input.images ?? undefined,
         updatedAt: new Date(),
@@ -138,6 +160,7 @@ export class CommunityService {
 
     const row = updated[0];
     const likes = row.likes ?? [];
+    const comments = this.parseComments(row.comments);
     return {
       id: row.id,
       contentJson: this.parseContentJson(row.contentJson),
@@ -152,7 +175,57 @@ export class CommunityService {
       },
       likesCount: likes.length,
       isLiked: likes.includes(input.userId),
+      commentsCount: comments.length,
+      comments,
     };
+  }
+
+  async addComment(input: {
+    userId: string;
+    email?: string | null;
+    postId: string;
+    content: string;
+  }) {
+    const existing = await this.dbService.db
+      .select()
+      .from(communityPosts)
+      .where(eq(communityPosts.id, input.postId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      throw new NotFoundException('Post not found');
+    }
+
+    const profile = await this.dbService.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, input.userId))
+      .limit(1);
+
+    const authorName = profile[0]?.name?.trim() || input.email || '匿名用户';
+    const authorAvatarUrl = profile[0]?.avatarUrl ?? null;
+
+    const comment: CommunityComment = {
+      id: randomUUID(),
+      userId: input.userId,
+      authorName,
+      authorAvatarUrl,
+      content: input.content,
+      createdAt: new Date().toISOString(),
+    };
+
+    const currentComments = existing[0].comments ?? [];
+    const nextComments = [...currentComments, JSON.stringify(comment)];
+
+    await this.dbService.db
+      .update(communityPosts)
+      .set({
+        comments: nextComments,
+        updatedAt: new Date(),
+      })
+      .where(eq(communityPosts.id, input.postId));
+
+    return { comment, commentsCount: nextComments.length };
   }
 
   async toggleLike(userId: string, postId: string) {
@@ -194,5 +267,25 @@ export class CommunityService {
     } catch {
       return { type: 'doc', content: [] };
     }
+  }
+
+  private parseComments(value: string[] | null): CommunityComment[] {
+    if (!value || value.length === 0) return [];
+    const result: CommunityComment[] = [];
+    for (const raw of value) {
+      try {
+        const parsed = JSON.parse(raw) as CommunityComment;
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          typeof parsed.content === 'string'
+        ) {
+          result.push(parsed);
+        }
+      } catch {
+        // ignore invalid comment payloads
+      }
+    }
+    return result;
   }
 }

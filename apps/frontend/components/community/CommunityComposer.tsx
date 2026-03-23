@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
-import { Button, Upload, type UploadFile } from "antd";
+import { Button } from "antd";
 import type { JSONContent } from "@tiptap/react";
 import Image from "next/image";
 
