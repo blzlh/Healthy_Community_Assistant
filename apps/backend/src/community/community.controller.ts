@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Req,
@@ -54,9 +55,12 @@ export class CommunityController {
     }
 
     const contentText = (body.contentText ?? '').trim();
-    if (!contentText) {
-      throw new BadRequestException('contentText is required');
+    const images = body.images ?? [];
+
+    if (!contentText && images.length === 0) {
+      throw new BadRequestException('Content or images are required');
     }
+
     if (contentText.length > 5000) {
       throw new BadRequestException('contentText is too long');
     }
@@ -70,7 +74,50 @@ export class CommunityController {
       email: user.email,
       contentJson: body.contentJson,
       contentText,
+      images,
     });
     return { post };
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('community/posts/:id')
+  async updatePost(
+    @Req()
+    request: {
+      user?: { id?: string };
+    },
+    @Param('id') id: string,
+    @Body() body: CreateCommunityPostDto
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    const post = await this.communityService.updatePost({
+      userId: user.id,
+      postId: id,
+      contentJson: body.contentJson,
+      contentText: body.contentText,
+      images: body.images,
+    });
+    return { post };
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('community/posts/:id/like')
+  async toggleLike(
+    @Req()
+    request: {
+      user?: { id?: string };
+    },
+    @Param('id') id: string
+  ) {
+    const user = request.user;
+    if (!user?.id) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    return await this.communityService.toggleLike(user.id, id);
   }
 }

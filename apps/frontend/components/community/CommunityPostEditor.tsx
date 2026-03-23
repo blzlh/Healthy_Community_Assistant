@@ -5,9 +5,12 @@ import { Icon } from "@iconify/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { JSONContent } from "@tiptap/react";
+import { Upload } from "antd";
 
 type CommunityPostEditorProps = {
   onChange: (payload: { contentJson: JSONContent; contentText: string; isEmpty: boolean }) => void;
+  onImageUpload?: (file: File) => void;
+  initialContent?: JSONContent;
   resetSignal: number;
 };
 
@@ -35,9 +38,15 @@ function ActionButton({
   );
 }
 
-export function CommunityPostEditor({ onChange, resetSignal }: CommunityPostEditorProps) {
+export function CommunityPostEditor({
+  onChange,
+  onImageUpload,
+  initialContent,
+  resetSignal,
+}: CommunityPostEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit.configure({ heading: { levels: [2, 3] } })],
+    content: initialContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -56,13 +65,17 @@ export function CommunityPostEditor({ onChange, resetSignal }: CommunityPostEdit
 
   useEffect(() => {
     if (!editor) return;
-    editor.commands.clearContent();
+    if (initialContent) {
+      editor.commands.setContent(initialContent);
+    } else {
+      editor.commands.clearContent();
+    }
     onChange({
       contentJson: editor.getJSON(),
-      contentText: "",
-      isEmpty: true,
+      contentText: editor.getText().trim(),
+      isEmpty: editor.isEmpty,
     });
-  }, [editor, onChange, resetSignal]);
+  }, [editor, onChange, resetSignal, initialContent]);
 
   if (!editor) {
     return null;
@@ -96,6 +109,18 @@ export function CommunityPostEditor({ onChange, resetSignal }: CommunityPostEdit
           icon="material-symbols:format-quote"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
         />
+        <div className="ml-1 h-4 w-px bg-white/10" />
+        <Upload
+          accept="image/*"
+          showUploadList={false}
+          beforeUpload={(file) => {
+            onImageUpload?.(file);
+            return false;
+          }}
+          multiple
+        >
+          <ActionButton active={false} icon="material-symbols:add-photo-alternate" onClick={() => {}} />
+        </Upload>
       </div>
       <EditorContent editor={editor} />
     </div>

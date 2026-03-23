@@ -4,8 +4,9 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
-import { Button } from "antd";
+import { Button, Upload, type UploadFile } from "antd";
 import type { JSONContent } from "@tiptap/react";
+import Image from "next/image";
 
 import { CommunityPostEditor } from "@/components/community/CommunityPostEditor";
 import { Toast } from "@/components/ui/Toast/Toast";
@@ -18,18 +19,37 @@ type PostDraft = {
   isEmpty: boolean;
 };
 
-export function CommunityComposer() {
+export function CommunityComposer({
+  postId,
+  initialData,
+}: {
+  postId?: string;
+  initialData?: {
+    contentJson: JSONContent;
+    contentText: string;
+    images: string[];
+  };
+}) {
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const user = useAuthStore((state) => state.user);
-  const { publishing, publishPost } = useCommunity();
+  const { publishing, publishPost, editPost } = useCommunity();
   const [resetSignal, setResetSignal] = useState(0);
-  const [draft, setDraft] = useState<PostDraft>({
-    contentJson: { type: "doc", content: [] },
-    contentText: "",
-    isEmpty: true,
-  });
+  const [draft, setDraft] = useState<PostDraft>(
+    initialData
+      ? {
+          contentJson: initialData.contentJson,
+          contentText: initialData.contentText,
+          isEmpty: false,
+        }
+      : {
+          contentJson: { type: "doc", content: [] },
+          contentText: "",
+          isEmpty: true,
+        }
+  );
+  const [images, setImages] = useState<string[]>(initialData?.images ?? []);
 
   const handleEditorChange = useCallback(
     ({ contentJson, contentText, isEmpty }: PostDraft) => {
@@ -37,6 +57,20 @@ export function CommunityComposer() {
     },
     []
   );
+
+  // 处理图片上传预览（Base64 方案）
+  const handleBeforeUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImages((prev) => [...prev, reader.result as string]);
+    };
+    reader.readAsDataURL(file);
+    return false; // 拦截 antd 默认上传行为，由发布按钮统一提交
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   if (!hydrated) {
     return (
@@ -49,7 +83,9 @@ export function CommunityComposer() {
   if (!token) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white">
-        <div className="text-base font-semibold">请先登录后发布动态</div>
+        <div className="text-base font-semibold">
+          请先登录后{postId ? "编辑" : "发布"}动态
+        </div>
         <Link href="/auth/login" className="mt-2 inline-block text-sm text-white/70 underline">
           前往登录
         </Link>
@@ -61,7 +97,9 @@ export function CommunityComposer() {
     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-white">写动态</h1>
+          <h1 className="text-lg font-semibold text-white">
+            {postId ? "编辑动态" : "写动态"}
+          </h1>
           <p className="mt-1 text-xs text-white/50">
             发布身份：{(user?.name ?? user?.email ?? "匿名用户").trim()}
           </p>
@@ -75,34 +113,75 @@ export function CommunityComposer() {
         </Link>
       </div>
 
-      <CommunityPostEditor resetSignal={resetSignal} onChange={handleEditorChange} />
+      <CommunityPostEditor
+        resetSignal={resetSignal}
+        initialContent={initialData?.contentJson}
+        onChange={handleEditorChange}
+        onImageUpload={handleBeforeUpload}
+      />
 
-      <div className="mt-3 flex justify-end">
+      {/* 图片预览 */}
+      {images.length > 0 && (
+        <div className="mt-4 grid w-fit grid-cols-3 gap-2 sm:gap-3">
+          {images.map((img, index) => (
+            <div
+              key={index}
+              className="group relative h-28 w-28 overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:h-32 sm:w-32"
+            >
+              <Image
+                src={img}
+                alt={`preview-${index}`}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+              <button
+                type="button"
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity hover:bg-red-500 group-hover:opacity-100 sm:h-6 sm:w-6"
+                onClick={() => handleRemoveImage(index)}
+              >
+                <Icon icon="material-symbols:close" className="h-3 w-3 sm:h-4 sm:w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-6 flex justify-end">
         <Button
           type="primary"
           loading={publishing}
-          disabled={draft.isEmpty}
-          className="!bg-zinc-800 !text-white hover:!bg-zinc-700"
+          disabled={draft.isEmpty && images.length === 0}
+          className="!bg-zinc-800 !text-white hover:!bg-zinc-700 disabled:!opacity-50"
           onClick={async () => {
-            const result = await publishPost({
+            const payload = {
               contentJson: draft.contentJson,
               contentText: draft.contentText,
-            });
+              images,
+            };
+
+            const result = postId
+              ? await editPost(postId, payload)
+              : await publishPost(payload);
+
             if (!result.ok) {
               Toast.error({
-                title: "发布失败",
+                title: postId ? "编辑失败" : "发布失败",
                 message: result.message ?? "请稍后重试",
               });
               return;
             }
             Toast.success({
-              message: "动态发布成功",
+              message: postId ? "动态更新成功" : "动态发布成功",
             });
-            setResetSignal((value) => value + 1);
+            if (!postId) {
+              setResetSignal((s) => s + 1);
+              setImages([]);
+            }
             router.push("/community");
           }}
         >
-          发布动态
+          {postId ? "保存修改" : "发布"}
         </Button>
       </div>
     </section>

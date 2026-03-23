@@ -25,6 +25,8 @@ export const communityPosts = pgTable('community_posts', {
   authorAvatarUrl: text('author_avatar_url'),
   contentJson: text('content_json').notNull(),
   contentText: text('content_text').notNull(),
+  images: text('images').array(), // 新增图片数组字段
+  likes: text('likes').array().default([]), // 新增点赞用户ID数组
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 });

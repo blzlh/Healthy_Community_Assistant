@@ -7,6 +7,8 @@ import { getAxiosErrorMessage } from "@/services/auth";
 import {
   createCommunityPost,
   fetchCommunityPosts,
+  updateCommunityPost,
+  togglePostLike,
   type CommunityPost,
 } from "@/services/community";
 import { useAuthStore } from "@/store/auth-store";
@@ -45,6 +47,7 @@ export function useCommunity() {
     async (payload: {
       contentJson: JSONContent;
       contentText: string;
+      images?: string[];
     }): Promise<CommunityResult & { post?: CommunityPost }> => {
       if (!token) {
         return { ok: false, message: "未登录" };
@@ -63,10 +66,54 @@ export function useCommunity() {
     [token]
   );
 
+  const editPost = useCallback(
+    async (
+      postId: string,
+      payload: {
+        contentJson?: JSONContent;
+        contentText?: string;
+        images?: string[];
+      }
+    ): Promise<CommunityResult & { post?: CommunityPost }> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      setPublishing(true);
+      try {
+        const { data, status } = await updateCommunityPost(token, postId, payload);
+        return { ok: true, status, post: data.post };
+      } catch (error) {
+        const message = getAxiosErrorMessage(error);
+        return { ok: false, message };
+      } finally {
+        setPublishing(false);
+      }
+    },
+    [token]
+  );
+
+  const toggleLike = useCallback(
+    async (postId: string): Promise<CommunityResult & { isLiked?: boolean }> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      try {
+        const { data, status } = await togglePostLike(token, postId);
+        return { ok: true, status, isLiked: data.isLiked };
+      } catch (error) {
+        const message = getAxiosErrorMessage(error);
+        return { ok: false, message };
+      }
+    },
+    [token]
+  );
+
   return {
     loading,
     publishing,
     loadPosts,
     publishPost,
+    editPost,
+    toggleLike,
   };
 }
