@@ -7,6 +7,7 @@ import { ChatModule } from './chat/chat.module';
 import { CommunityModule } from './community/community.module';
 import { DbModule } from './db/db.module';
 import { ProfileModule } from './profile/profile.module';
+import { HealthAgentModule } from './modules/health-agent/health-agent.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProfileModule } from './profile/profile.module';
     CommunityModule,
     DbModule,
     ProfileModule,
+    HealthAgentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
