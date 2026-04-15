@@ -75,7 +75,7 @@ export class SecurityService {
 
       // 2. 更新 Redis 计数器
       const key = `${REDIS_PREFIX.LOGIN_ATTEMPTS}${ipAddress}`;
-      
+
       if (success) {
         // 登录成功，清除失败计数
         await this.redis.del(key);
@@ -83,7 +83,7 @@ export class SecurityService {
       } else {
         // 登录失败，增加计数
         const currentCount = await this.redis.incr(key);
-        
+
         // 设置过期时间（首次设置）
         if (currentCount === 1) {
           await this.redis.expire(key, BRUTE_FORCE_CONFIG.WINDOW_SECONDS);
@@ -336,7 +336,7 @@ export class SecurityService {
         .$dynamic();
 
       // 添加过滤条件
-      const conditions = [];
+      const conditions: any[] = [];
       if (type) {
         conditions.push(eq(securityLogs.type, type));
       }

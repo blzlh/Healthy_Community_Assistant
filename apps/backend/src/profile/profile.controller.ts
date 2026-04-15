@@ -30,12 +30,8 @@ export class ProfileController {
     if (!user?.id) {
       throw new UnauthorizedException('Invalid user');
     }
-    let profile = await this.profileService.getProfile(user.id);
-    if (!profile) {
-      profile = await this.profileService.upsertProfile(user.id, {
-        email: user.email,
-      });
-    }
+    const profile = await this.profileService.getProfile(user.id);
+    // 注意：不再自动创建 profile，profile 应该在登录时由 auth.service 创建
     return {
       user: {
         id: user.id,

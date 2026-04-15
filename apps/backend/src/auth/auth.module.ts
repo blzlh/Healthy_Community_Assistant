@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthController } from './auth.controller';
@@ -7,8 +7,9 @@ import { SupabaseAuthGuard } from './supabase-auth.guard';
 import { SecurityModule } from '@/security/security.module';
 import { LoginLoggingInterceptor } from '@/security/security.interceptor';
 
+@Global()
 @Module({
-  imports: [ConfigModule, SecurityModule],
+  imports: [ConfigModule, forwardRef(() => SecurityModule)],
   controllers: [AuthController],
   providers: [
     AuthService,

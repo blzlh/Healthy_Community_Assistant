@@ -8,6 +8,8 @@ import {
   ExecutionContext,
   CallHandler,
   Logger,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
@@ -44,7 +46,10 @@ export class LoginLoggingInterceptor implements NestInterceptor {
 
       if (blocked) {
         this.logger.warn(`Blocked request from banned IP: ${ipAddress}, reason: ${reason}`);
-        throw new Error(`您的IP已被封禁，原因：${reason}。请稍后再试或联系管理员。`);
+        throw new HttpException(
+          { message: '您的IP已被封禁，请稍后再试或联系管理员。' },
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       const startTime = Date.now();

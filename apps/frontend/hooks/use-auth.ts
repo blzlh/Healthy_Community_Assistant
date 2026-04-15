@@ -105,21 +105,23 @@ export function useAuth() {
           normalizedCode,
           isAdmin
         );
-        if (data?.session || data?.user) {
+        // 只有当 session 存在时才算登录成功
+        if (data?.session?.access_token) {
           setSession(data.session, data.user);
-          const token = data.session?.access_token ?? "";
-          if (token) {
-            fetchProfile(token)
-              .then(({ data: profileData }) => {
-                if (profileData?.user) {
-                  updateUser(profileData.user);
-                }
-              })
-              .catch(() => undefined);
-          }
+          const token = data.session.access_token;
+          fetchProfile(token)
+            .then(({ data: profileData }) => {
+              if (profileData?.user) {
+                updateUser(profileData.user);
+              }
+            })
+            .catch(() => undefined);
+          setMessage(`${status} ${JSON.stringify(data)}`);
+          return { ok: true, status, data };
+        } else {
+          // 没有 session，登录失败
+          return { ok: false, message: "验证码错误或已过期" };
         }
-        setMessage(`${status} ${JSON.stringify(data)}`);
-        return { ok: true, status, data };
       } catch (error) {
         const errorMessage = getAxiosErrorMessage(error);
         setMessage(errorMessage);

@@ -75,11 +75,10 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 onClick={() => setIsAdmin(false)}
-                className={`flex-1 h-10 transition-all ${
-                  !isAdmin
+                className={`flex-1 h-10 transition-all ${!isAdmin
                     ? "bg-white text-black hover:bg-zinc-200"
                     : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
-                }`}
+                  }`}
               >
                 <Icon icon="lucide:user" className="h-4 w-4" />
                 普通用户
@@ -87,11 +86,10 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 onClick={() => setIsAdmin(true)}
-                className={`flex-1 h-10 transition-all ${
-                  isAdmin
+                className={`flex-1 h-10 transition-all ${isAdmin
                     ? "bg-white text-black hover:bg-zinc-200"
                     : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
-                }`}
+                  }`}
               >
                 <Icon icon="lucide:shield-check" className="h-4 w-4" />
                 管理员

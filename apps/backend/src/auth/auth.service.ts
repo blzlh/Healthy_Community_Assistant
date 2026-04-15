@@ -125,7 +125,7 @@ export class AuthService {
       // 1. 查询数据库中是否已有用户记录
       const { data: profileData, error: profileFetchError } = await admin
         .from('profiles')
-        .select('name, is_admin')
+        .select('name, is_admin, email')
         .eq('user_id', userId)
         .single();
 
@@ -139,16 +139,19 @@ export class AuthService {
         // 用户已存在，只更新基本信息，保留原有的 is_admin
         const finalName = profileData.name || name?.trim() || email;
         
-        const { error: profileError } = await admin
-          .from('profiles')
-          .update({
-            email,
-            name: finalName,
-            // 注意：不更新 is_admin，保留数据库中的值
-          })
-          .eq('user_id', userId);
+        // 只有当 name 或 email 有变化时才更新
+        if (profileData.name !== finalName || profileData.email !== email) {
+          const { error: profileError } = await admin
+            .from('profiles')
+            .update({
+              email,
+              name: finalName,
+              // 注意：不更新 is_admin，保留数据库中的值
+            })
+            .eq('user_id', userId);
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
+        }
       } else {
         // 3. 如果用户不存在，创建新用户并设置默认值
         const finalName = name?.trim() || email;
