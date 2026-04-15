@@ -51,6 +51,30 @@ export type SecurityStatistics = {
   todaySecurityEvents: number;
   eventsByType: Record<string, number>;
   bruteForceDetections: number;
+  spamDetections: number;
+};
+
+// WebSocket 事件日志类型
+export type WebsocketEvent = {
+  id: string;
+  eventType: string;
+  socketId: string;
+  userId: string | null;
+  userName: string | null;
+  ipAddress: string | null;
+  roomId: string | null;
+  messagePreview: string | null;
+  messageCount: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
+// WebSocket 统计数据类型
+export type WebsocketStatistics = {
+  todayConnections: number;
+  todayDisconnections: number;
+  todaySpamDetections: number;
+  todayMessages: number;
 };
 
 type SecurityState = {
@@ -62,11 +86,16 @@ type SecurityState = {
   blockedIps: IpBan[];
   // 安全事件日志
   securityLogs: SecurityLog[];
+  // WebSocket 事件日志
+  websocketEvents: WebsocketEvent[];
+  // WebSocket 统计
+  websocketStatistics: WebsocketStatistics | null;
   // 加载状态
   loadingStatistics: boolean;
   loadingAttempts: boolean;
   loadingBlockedIps: boolean;
   loadingLogs: boolean;
+  loadingWebsocketEvents: boolean;
   // 错误信息
   error: string | null;
 
@@ -78,10 +107,13 @@ type SecurityState = {
   removeBlockedIp: (ipAddress: string) => void;
   setSecurityLogs: (logs: SecurityLog[]) => void;
   updateSecurityLog: (id: string, updates: Partial<SecurityLog>) => void;
+  setWebsocketEvents: (events: WebsocketEvent[]) => void;
+  setWebsocketStatistics: (stats: WebsocketStatistics) => void;
   setLoadingStatistics: (loading: boolean) => void;
   setLoadingAttempts: (loading: boolean) => void;
   setLoadingBlockedIps: (loading: boolean) => void;
   setLoadingLogs: (loading: boolean) => void;
+  setLoadingWebsocketEvents: (loading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 };
@@ -92,10 +124,13 @@ export const useSecurityStore = create<SecurityState>((set) => ({
   loginAttempts: [],
   blockedIps: [],
   securityLogs: [],
+  websocketEvents: [],
+  websocketStatistics: null,
   loadingStatistics: false,
   loadingAttempts: false,
   loadingBlockedIps: false,
   loadingLogs: false,
+  loadingWebsocketEvents: false,
   error: null,
 
   // 操作方法
@@ -114,10 +149,13 @@ export const useSecurityStore = create<SecurityState>((set) => ({
         log.id === id ? { ...log, ...updates } : log
       ),
     })),
+  setWebsocketEvents: (events) => set({ websocketEvents: events }),
+  setWebsocketStatistics: (stats) => set({ websocketStatistics: stats }),
   setLoadingStatistics: (loading) => set({ loadingStatistics: loading }),
   setLoadingAttempts: (loading) => set({ loadingAttempts: loading }),
   setLoadingBlockedIps: (loading) => set({ loadingBlockedIps: loading }),
   setLoadingLogs: (loading) => set({ loadingLogs: loading }),
+  setLoadingWebsocketEvents: (loading) => set({ loadingWebsocketEvents: loading }),
   setError: (error) => set({ error }),
   reset: () =>
     set({
@@ -125,10 +163,13 @@ export const useSecurityStore = create<SecurityState>((set) => ({
       loginAttempts: [],
       blockedIps: [],
       securityLogs: [],
+      websocketEvents: [],
+      websocketStatistics: null,
       loadingStatistics: false,
       loadingAttempts: false,
       loadingBlockedIps: false,
       loadingLogs: false,
+      loadingWebsocketEvents: false,
       error: null,
     }),
 }));

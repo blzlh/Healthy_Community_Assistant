@@ -46,6 +46,28 @@ export type SecurityStatistics = {
   todaySecurityEvents: number;
   eventsByType: Record<string, number>;
   bruteForceDetections: number;
+  spamDetections: number;
+};
+
+export type WebsocketEvent = {
+  id: string;
+  eventType: string; // 'connect', 'disconnect', 'message', 'spam_detected'
+  socketId: string;
+  userId: string | null;
+  userName: string | null;
+  ipAddress: string | null;
+  roomId: string | null;
+  messagePreview: string | null;
+  messageCount: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
+export type WebsocketStatistics = {
+  todayConnections: number;
+  todayDisconnections: number;
+  todaySpamDetections: number;
+  todayMessages: number;
 };
 
 /**
@@ -249,6 +271,68 @@ export async function resolveSecurityEvent(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: '解决事件失败' }));
     return { success: false, message: error.message || '解决事件失败' };
+  }
+
+  return response.json();
+}
+
+// ==================== WebSocket 事件日志相关接口 ====================
+
+/**
+ * 获取 WebSocket 事件日志
+ */
+export async function getWebsocketEvents(
+  token: string,
+  params?: {
+    eventType?: string;
+    socketId?: string;
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  },
+): Promise<{ success: boolean; data?: WebsocketEvent[]; message?: string }> {
+  const queryParams = new URLSearchParams();
+  if (params?.eventType) queryParams.append('eventType', params.eventType);
+  if (params?.socketId) queryParams.append('socketId', params.socketId);
+  if (params?.userId) queryParams.append('userId', params.userId);
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.offset) queryParams.append('offset', params.offset.toString());
+
+  const url = `${API_BASE}/security/websocket-events?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '获取WebSocket事件日志失败' }));
+    return { success: false, message: error.message || '获取WebSocket事件日志失败' };
+  }
+
+  return response.json();
+}
+
+/**
+ * 获取 WebSocket 统计信息
+ */
+export async function getWebsocketStatistics(
+  token: string,
+): Promise<{ success: boolean; data?: WebsocketStatistics; message?: string }> {
+  const response = await fetch(`${API_BASE}/security/websocket-statistics`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '获取WebSocket统计信息失败' }));
+    return { success: false, message: error.message || '获取WebSocket统计信息失败' };
   }
 
   return response.json();

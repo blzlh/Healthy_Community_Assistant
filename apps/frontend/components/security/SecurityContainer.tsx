@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/shadcn/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn/tab";
 import { useSecurity } from "@/hooks/use-security";
 import { useAuthStore } from "@/store/auth-store";
-import { message } from "antd";
+import { App } from "antd";
 
 import { SecurityOverview } from "./SecurityOverview";
 import { SecurityLogsList } from "./SecurityLogsList";
 import { BlockedIpList } from "./BlockedIpList";
 import { BlockIpForm } from "./BlockIpForm";
+import { WebSocketEventsList } from "./WebSocketEventsList";
 
 // Tab 配置
 const TAB_CONFIG = [
@@ -23,6 +24,11 @@ const TAB_CONFIG = [
     value: "overview",
     icon: "lucide:layout-dashboard",
     label: "概览",
+  },
+  {
+    value: "websocket",
+    icon: "lucide:activity",
+    label: "WebSocket",
   },
   {
     value: "logs",
@@ -37,6 +43,7 @@ const TAB_CONFIG = [
 ] as const;
 
 export function SecurityContainer() {
+  const { message } = App.useApp();
   const hydrated = useAuthStore((state) => state.hydrated);
   const isAdmin = useAuthStore((state) => state.user)?.isAdmin;
 
@@ -45,15 +52,18 @@ export function SecurityContainer() {
     loginAttempts,
     blockedIps,
     securityLogs,
+    websocketEvents,
     loadingStatistics,
     loadingAttempts,
     loadingBlockedIps,
     loadingLogs,
+    loadingWebsocketEvents,
     error,
     loadStatistics,
     loadLoginAttempts,
     loadBlockedIps,
     loadSecurityLogs,
+    loadWebsocketEvents,
     handleUnblockIp,
     handleResolveEvent,
     handleBlockIp,
@@ -65,6 +75,7 @@ export function SecurityContainer() {
     loadLoginAttempts({ limit: 50 });
     loadBlockedIps(50);
     loadSecurityLogs({ limit: 50 });
+    loadWebsocketEvents({ limit: 50 });
   };
 
   // 初始化加载
@@ -72,7 +83,7 @@ export function SecurityContainer() {
     if (hydrated && isAdmin) {
       loadAllData();
     }
-  }, [hydrated, isAdmin, loadStatistics, loadLoginAttempts, loadBlockedIps, loadSecurityLogs]);
+  }, [hydrated, isAdmin, loadStatistics, loadLoginAttempts, loadBlockedIps, loadSecurityLogs, loadWebsocketEvents]);
 
   // 刷新数据
   const handleRefresh = () => {
@@ -172,6 +183,13 @@ export function SecurityContainer() {
               loginAttempts={loginAttempts}
               loadingStatistics={loadingStatistics}
               loadingAttempts={loadingAttempts}
+            />
+          </TabsContent>
+
+          <TabsContent value="websocket">
+            <WebSocketEventsList
+              events={websocketEvents}
+              loading={loadingWebsocketEvents}
             />
           </TabsContent>
 

@@ -16,6 +16,8 @@ import {
   checkIpStatus,
   getSecurityLogs,
   resolveSecurityEvent,
+  getWebsocketEvents,
+  getWebsocketStatistics,
 } from "@/services/security";
 
 type SecurityResult = {
@@ -31,10 +33,13 @@ export function useSecurity() {
   const loginAttempts = useSecurityStore((state) => state.loginAttempts);
   const blockedIps = useSecurityStore((state) => state.blockedIps);
   const securityLogs = useSecurityStore((state) => state.securityLogs);
+  const websocketEvents = useSecurityStore((state) => state.websocketEvents);
+  const websocketStatistics = useSecurityStore((state) => state.websocketStatistics);
   const loadingStatistics = useSecurityStore((state) => state.loadingStatistics);
   const loadingAttempts = useSecurityStore((state) => state.loadingAttempts);
   const loadingBlockedIps = useSecurityStore((state) => state.loadingBlockedIps);
   const loadingLogs = useSecurityStore((state) => state.loadingLogs);
+  const loadingWebsocketEvents = useSecurityStore((state) => state.loadingWebsocketEvents);
   const error = useSecurityStore((state) => state.error);
 
   // Store 操作
@@ -45,10 +50,13 @@ export function useSecurity() {
   const removeBlockedIp = useSecurityStore((state) => state.removeBlockedIp);
   const setSecurityLogs = useSecurityStore((state) => state.setSecurityLogs);
   const updateSecurityLog = useSecurityStore((state) => state.updateSecurityLog);
+  const setWebsocketEvents = useSecurityStore((state) => state.setWebsocketEvents);
+  const setWebsocketStatistics = useSecurityStore((state) => state.setWebsocketStatistics);
   const setLoadingStatistics = useSecurityStore((state) => state.setLoadingStatistics);
   const setLoadingAttempts = useSecurityStore((state) => state.setLoadingAttempts);
   const setLoadingBlockedIps = useSecurityStore((state) => state.setLoadingBlockedIps);
   const setLoadingLogs = useSecurityStore((state) => state.setLoadingLogs);
+  const setLoadingWebsocketEvents = useSecurityStore((state) => state.setLoadingWebsocketEvents);
   const setError = useSecurityStore((state) => state.setError);
   const resetStore = useSecurityStore((state) => state.reset);
 
@@ -266,6 +274,60 @@ export function useSecurity() {
   );
 
   /**
+   * 加载 WebSocket 事件日志
+   */
+  const loadWebsocketEvents = useCallback(
+    async (params?: {
+      eventType?: string;
+      socketId?: string;
+      userId?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<SecurityResult> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      setLoadingWebsocketEvents(true);
+      setError(null);
+      try {
+        const response = await getWebsocketEvents(token, params);
+        if (response.success && response.data) {
+          setWebsocketEvents(response.data);
+          return { ok: true };
+        }
+        return { ok: false, message: response.message || "获取WebSocket事件日志失败" };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "获取WebSocket事件日志失败";
+        setError(message);
+        return { ok: false, message };
+      } finally {
+        setLoadingWebsocketEvents(false);
+      }
+    },
+    [token, setWebsocketEvents, setLoadingWebsocketEvents, setError]
+  );
+
+  /**
+   * 加载 WebSocket 统计信息
+   */
+  const loadWebsocketStatistics = useCallback(async (): Promise<SecurityResult> => {
+    if (!token) {
+      return { ok: false, message: "未登录" };
+    }
+    try {
+      const response = await getWebsocketStatistics(token);
+      if (response.success && response.data) {
+        setWebsocketStatistics(response.data);
+        return { ok: true };
+      }
+      return { ok: false, message: response.message || "获取WebSocket统计信息失败" };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "获取WebSocket统计信息失败";
+      return { ok: false, message };
+    }
+  }, [token, setWebsocketStatistics]);
+
+  /**
    * 重置
    */
   const reset = useCallback(() => {
@@ -278,10 +340,13 @@ export function useSecurity() {
     loginAttempts,
     blockedIps,
     securityLogs,
+    websocketEvents,
+    websocketStatistics,
     loadingStatistics,
     loadingAttempts,
     loadingBlockedIps,
     loadingLogs,
+    loadingWebsocketEvents,
     error,
     // 方法
     loadStatistics,
@@ -292,6 +357,8 @@ export function useSecurity() {
     handleCheckIpStatus,
     loadSecurityLogs,
     handleResolveEvent,
+    loadWebsocketEvents,
+    loadWebsocketStatistics,
     reset,
   };
 }
