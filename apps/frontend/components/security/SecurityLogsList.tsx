@@ -5,7 +5,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
-import { Button } from "@/components/ui/shadcn/button";
 import { Tag, Skeleton, Empty, ConfigProvider } from "antd";
 
 interface SecurityLog {
@@ -60,7 +59,7 @@ const LOG_DETAIL_FIELDS = [
   { key: "action", label: "动作", dataKey: "actionTaken" as const },
 ];
 
-export function SecurityLogsList({ logs, loading, onResolve }: SecurityLogsListProps) {
+export function SecurityLogsList({ logs, loading }: SecurityLogsListProps) {
   if (loading) {
     return (
       <Card className="!bg-white/5 !border-white/10">
@@ -126,15 +125,6 @@ export function SecurityLogsList({ logs, loading, onResolve }: SecurityLogsListP
                         {formatTime(log.createdAt)}
                       </div>
                     </div>
-                    {!log.resolved && (
-                      <Button
-                        size="sm"
-                        onClick={() => onResolve(log.id)}
-                        className="!bg-green-600 !text-white hover:!bg-green-500 !h-7 !text-xs"
-                      >
-                        标记解决
-                      </Button>
-                    )}
                   </div>
                 );
               })}

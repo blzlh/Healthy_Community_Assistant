@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { Icon } from "@iconify/react";
-import { Button, Input, message } from "antd";
+import { Button, Input, App } from "antd";
 import { cn } from "@/lib/utils";
 import type { HealthRecordFormData } from "./types";
 import type { HealthRecord } from "@/services/health-records";
@@ -87,6 +87,7 @@ export function HealthRecordForm({
     submitting = false,
     className,
 }: HealthRecordFormProps) {
+    const { message } = App.useApp();
     const [formData, setFormData] = useState<HealthRecordFormData>(() => {
         if (editingRecord) {
             return {

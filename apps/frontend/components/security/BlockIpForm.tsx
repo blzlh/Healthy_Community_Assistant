@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn
 import { Button } from "@/components/ui/shadcn/button";
 import { Input } from "@/components/ui/shadcn/input";
 import { Icon } from "@iconify/react";
-import { Form, message } from "antd";
+import { Form, App } from "antd";
 import { useState } from "react";
 
 interface BlockIpFormProps {
@@ -41,6 +41,7 @@ const FORM_FIELDS = [
 ];
 
 export function BlockIpForm({ onSubmit }: BlockIpFormProps) {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 

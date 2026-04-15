@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify/react";
-import { message } from "antd";
+import { App } from "antd";
 import { BackToHome } from "@/components/BackToHome";
 import { useHealthRecords } from "@/hooks/use-health-records";
 import { useAuthStore } from "@/store/auth-store";
@@ -17,6 +17,7 @@ import type { HealthMetricType, HealthRecordFormData } from "./types";
 import type { HealthRecord } from "@/services/health-records";
 
 export function HealthRecordsContainer() {
+  const { message } = App.useApp();
   const { user } = useAuthStore();
   const {
     records,
