@@ -13,18 +13,21 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
   ParseUUIDPipe,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SupabaseAuthGuard } from '@/auth/supabase-auth.guard';
+import { RateLimiterInterceptor } from '@/security/rate-limiter.interceptor';
 import { HealthRecordsService } from './health-records.service';
 import type { CreateHealthRecordInput } from './health-records.service';
 
 @ApiTags('健康记录')
 @Controller('health-records')
 @UseGuards(SupabaseAuthGuard)
+@UseInterceptors(RateLimiterInterceptor)
 export class HealthRecordsController {
   constructor(private readonly recordsService: HealthRecordsService) {}
 

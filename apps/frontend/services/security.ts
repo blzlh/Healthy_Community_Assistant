@@ -337,3 +337,86 @@ export async function getWebsocketStatistics(
 
   return response.json();
 }
+
+// ==================== 接口滥用检测相关类型和接口 ====================
+
+export type ApiAbuseEvent = {
+  id: string;
+  endpoint: string;
+  method: string;
+  ipAddress: string;
+  userId: string | null;
+  userName: string | null;
+  qps: string;
+  duration: string;
+  actionTaken: string;
+  rateLimitDuration: string | null;
+  createdAt: string;
+};
+
+export type ApiAbuseStatistics = {
+  todayAbuseDetections: number;
+  currentRateLimited: number;
+  byEndpoint: Record<string, number>;
+  topEndpoints: { endpoint: string; count: number }[];
+};
+
+/**
+ * 获取接口滥用事件日志
+ */
+export async function getApiAbuseEvents(
+  token: string,
+  params?: {
+    endpoint?: string;
+    ipAddress?: string;
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  },
+): Promise<{ success: boolean; data?: ApiAbuseEvent[]; message?: string }> {
+  const queryParams = new URLSearchParams();
+  if (params?.endpoint) queryParams.append('endpoint', params.endpoint);
+  if (params?.ipAddress) queryParams.append('ipAddress', params.ipAddress);
+  if (params?.userId) queryParams.append('userId', params.userId);
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.offset) queryParams.append('offset', params.offset.toString());
+
+  const url = `${API_BASE}/security/api-abuse-events?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '获取接口滥用事件日志失败' }));
+    return { success: false, message: error.message || '获取接口滥用事件日志失败' };
+  }
+
+  return response.json();
+}
+
+/**
+ * 获取接口滥用统计信息
+ */
+export async function getApiAbuseStatistics(
+  token: string,
+): Promise<{ success: boolean; data?: ApiAbuseStatistics; message?: string }> {
+  const response = await fetch(`${API_BASE}/security/api-abuse-statistics`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '获取接口滥用统计信息失败' }));
+    return { success: false, message: error.message || '获取接口滥用统计信息失败' };
+  }
+
+  return response.json();
+}

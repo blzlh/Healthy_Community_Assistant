@@ -17,6 +17,7 @@ import { SecurityLogsList } from "./SecurityLogsList";
 import { BlockedIpList } from "./BlockedIpList";
 import { BlockIpForm } from "./BlockIpForm";
 import { WebSocketEventsList } from "./WebSocketEventsList";
+import { ApiAbuseEventsList } from "./ApiAbuseEventsList";
 
 // Tab 配置
 const TAB_CONFIG = [
@@ -24,6 +25,11 @@ const TAB_CONFIG = [
     value: "overview",
     icon: "lucide:layout-dashboard",
     label: "概览",
+  },
+  {
+    value: "api-abuse",
+    icon: "lucide:zap",
+    label: "接口滥用",
   },
   {
     value: "websocket",
@@ -53,17 +59,20 @@ export function SecurityContainer() {
     blockedIps,
     securityLogs,
     websocketEvents,
+    apiAbuseEvents,
     loadingStatistics,
     loadingAttempts,
     loadingBlockedIps,
     loadingLogs,
     loadingWebsocketEvents,
+    loadingApiAbuseEvents,
     error,
     loadStatistics,
     loadLoginAttempts,
     loadBlockedIps,
     loadSecurityLogs,
     loadWebsocketEvents,
+    loadApiAbuseEvents,
     handleUnblockIp,
     handleResolveEvent,
     handleBlockIp,
@@ -76,6 +85,7 @@ export function SecurityContainer() {
     loadBlockedIps(50);
     loadSecurityLogs({ limit: 50 });
     loadWebsocketEvents({ limit: 50 });
+    loadApiAbuseEvents({ limit: 50 });
   };
 
   // 初始化加载
@@ -83,7 +93,7 @@ export function SecurityContainer() {
     if (hydrated && isAdmin) {
       loadAllData();
     }
-  }, [hydrated, isAdmin, loadStatistics, loadLoginAttempts, loadBlockedIps, loadSecurityLogs, loadWebsocketEvents]);
+  }, [hydrated, isAdmin, loadStatistics, loadLoginAttempts, loadBlockedIps, loadSecurityLogs, loadWebsocketEvents, loadApiAbuseEvents]);
 
   // 刷新数据
   const handleRefresh = () => {
@@ -183,6 +193,13 @@ export function SecurityContainer() {
               loginAttempts={loginAttempts}
               loadingStatistics={loadingStatistics}
               loadingAttempts={loadingAttempts}
+            />
+          </TabsContent>
+
+          <TabsContent value="api-abuse">
+            <ApiAbuseEventsList
+              events={apiAbuseEvents}
+              loading={loadingApiAbuseEvents}
             />
           </TabsContent>
 

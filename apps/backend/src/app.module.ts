@@ -8,6 +8,7 @@ import { CommunityModule } from './community/community.module';
 import { DbModule } from './db/db.module';
 import { ProfileModule } from './profile/profile.module';
 import { HealthAgentModule } from './modules/health-agent/health-agent.module';
+import { SecurityModule } from './security/security.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HealthAgentModule } from './modules/health-agent/health-agent.module';
     DbModule,
     ProfileModule,
     HealthAgentModule,
+    SecurityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -77,6 +77,29 @@ export type WebsocketStatistics = {
   todayMessages: number;
 };
 
+// 接口滥用事件类型
+export type ApiAbuseEvent = {
+  id: string;
+  endpoint: string;
+  method: string;
+  ipAddress: string;
+  userId: string | null;
+  userName: string | null;
+  qps: string;
+  duration: string;
+  actionTaken: string;
+  rateLimitDuration: string | null;
+  createdAt: string;
+};
+
+// 接口滥用统计数据类型
+export type ApiAbuseStatistics = {
+  todayAbuseDetections: number;
+  currentRateLimited: number;
+  byEndpoint: Record<string, number>;
+  topEndpoints: { endpoint: string; count: number }[];
+};
+
 type SecurityState = {
   // 统计数据
   statistics: SecurityStatistics | null;
@@ -90,12 +113,17 @@ type SecurityState = {
   websocketEvents: WebsocketEvent[];
   // WebSocket 统计
   websocketStatistics: WebsocketStatistics | null;
+  // 接口滥用事件日志
+  apiAbuseEvents: ApiAbuseEvent[];
+  // 接口滥用统计
+  apiAbuseStatistics: ApiAbuseStatistics | null;
   // 加载状态
   loadingStatistics: boolean;
   loadingAttempts: boolean;
   loadingBlockedIps: boolean;
   loadingLogs: boolean;
   loadingWebsocketEvents: boolean;
+  loadingApiAbuseEvents: boolean;
   // 错误信息
   error: string | null;
 
@@ -109,11 +137,14 @@ type SecurityState = {
   updateSecurityLog: (id: string, updates: Partial<SecurityLog>) => void;
   setWebsocketEvents: (events: WebsocketEvent[]) => void;
   setWebsocketStatistics: (stats: WebsocketStatistics) => void;
+  setApiAbuseEvents: (events: ApiAbuseEvent[]) => void;
+  setApiAbuseStatistics: (stats: ApiAbuseStatistics) => void;
   setLoadingStatistics: (loading: boolean) => void;
   setLoadingAttempts: (loading: boolean) => void;
   setLoadingBlockedIps: (loading: boolean) => void;
   setLoadingLogs: (loading: boolean) => void;
   setLoadingWebsocketEvents: (loading: boolean) => void;
+  setLoadingApiAbuseEvents: (loading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 };
@@ -126,11 +157,14 @@ export const useSecurityStore = create<SecurityState>((set) => ({
   securityLogs: [],
   websocketEvents: [],
   websocketStatistics: null,
+  apiAbuseEvents: [],
+  apiAbuseStatistics: null,
   loadingStatistics: false,
   loadingAttempts: false,
   loadingBlockedIps: false,
   loadingLogs: false,
   loadingWebsocketEvents: false,
+  loadingApiAbuseEvents: false,
   error: null,
 
   // 操作方法
@@ -151,11 +185,14 @@ export const useSecurityStore = create<SecurityState>((set) => ({
     })),
   setWebsocketEvents: (events) => set({ websocketEvents: events }),
   setWebsocketStatistics: (stats) => set({ websocketStatistics: stats }),
+  setApiAbuseEvents: (events) => set({ apiAbuseEvents: events }),
+  setApiAbuseStatistics: (stats) => set({ apiAbuseStatistics: stats }),
   setLoadingStatistics: (loading) => set({ loadingStatistics: loading }),
   setLoadingAttempts: (loading) => set({ loadingAttempts: loading }),
   setLoadingBlockedIps: (loading) => set({ loadingBlockedIps: loading }),
   setLoadingLogs: (loading) => set({ loadingLogs: loading }),
   setLoadingWebsocketEvents: (loading) => set({ loadingWebsocketEvents: loading }),
+  setLoadingApiAbuseEvents: (loading) => set({ loadingApiAbuseEvents: loading }),
   setError: (error) => set({ error }),
   reset: () =>
     set({
@@ -165,11 +202,14 @@ export const useSecurityStore = create<SecurityState>((set) => ({
       securityLogs: [],
       websocketEvents: [],
       websocketStatistics: null,
+      apiAbuseEvents: [],
+      apiAbuseStatistics: null,
       loadingStatistics: false,
       loadingAttempts: false,
       loadingBlockedIps: false,
       loadingLogs: false,
       loadingWebsocketEvents: false,
+      loadingApiAbuseEvents: false,
       error: null,
     }),
 }));

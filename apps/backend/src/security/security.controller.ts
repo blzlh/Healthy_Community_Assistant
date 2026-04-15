@@ -286,4 +286,56 @@ export class SecurityController {
       data: statistics,
     };
   }
+
+  // ==================== 接口滥用检测相关接口 ====================
+
+  /**
+   * 获取接口滥用事件日志
+   * GET /security/api-abuse-events
+   */
+  @Get('api-abuse-events')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取接口滥用事件日志', description: '获取高频接口调用滥用事件' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getApiAbuseEvents(
+    @Request() req: any,
+    @Query('endpoint') endpoint?: string,
+    @Query('ipAddress') ipAddress?: string,
+    @Query('userId') userId?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    await this.checkAdmin(req.user.id);
+
+    const events = await this.securityService.getApiAbuseEvents({
+      endpoint,
+      ipAddress,
+      userId,
+      limit: limit ? parseInt(limit, 10) : 100,
+      offset: offset ? parseInt(offset, 10) : 0,
+    });
+
+    return {
+      success: true,
+      data: events,
+    };
+  }
+
+  /**
+   * 获取接口滥用统计信息
+   * GET /security/api-abuse-statistics
+   */
+  @Get('api-abuse-statistics')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取接口滥用统计信息', description: '获取今日接口滥用检测统计' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getApiAbuseStatistics(@Request() req: any) {
+    await this.checkAdmin(req.user.id);
+
+    const statistics = await this.securityService.getApiAbuseStatistics();
+    return {
+      success: true,
+      data: statistics,
+    };
+  }
 }

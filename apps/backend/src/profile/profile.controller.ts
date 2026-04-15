@@ -8,12 +8,15 @@ import {
   Req,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
+import { RateLimiterInterceptor } from '../security/rate-limiter.interceptor';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller()
+@UseInterceptors(RateLimiterInterceptor)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 

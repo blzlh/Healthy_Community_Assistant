@@ -141,3 +141,20 @@ export const websocketEvents = pgTable('websocket_events', {
   reason: text('reason'), // 断开原因或刷屏原因
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+/**
+ * 接口滥用事件表 - 记录高频接口调用
+ */
+export const apiAbuseEvents = pgTable('api_abuse_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  endpoint: text('endpoint').notNull(), // 接口路径
+  method: text('method').notNull(), // GET/POST/PUT/DELETE
+  ipAddress: text('ip_address').notNull(),
+  userId: uuid('user_id'),
+  userName: text('user_name'), // 用户名快照
+  qps: text('qps').notNull(), // QPS值
+  duration: text('duration').notNull(), // 持续秒数
+  actionTaken: text('action_taken').notNull(), // 'rate_limited', 'blocked'
+  rateLimitDuration: text('rate_limit_duration'), // 限流时长（秒）
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});

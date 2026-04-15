@@ -10,13 +10,16 @@ import {
   Req,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
+import { RateLimiterInterceptor } from '../security/rate-limiter.interceptor';
 import { CommunityService } from './community.service';
 import { AddCommunityCommentDto } from './dto/add-community-comment.dto';
 import { CreateCommunityPostDto } from './dto/create-community-post.dto';
 
 @Controller()
+@UseInterceptors(RateLimiterInterceptor)
 export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 

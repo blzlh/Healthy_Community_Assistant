@@ -18,6 +18,8 @@ import {
   resolveSecurityEvent,
   getWebsocketEvents,
   getWebsocketStatistics,
+  getApiAbuseEvents,
+  getApiAbuseStatistics,
 } from "@/services/security";
 
 type SecurityResult = {
@@ -35,11 +37,14 @@ export function useSecurity() {
   const securityLogs = useSecurityStore((state) => state.securityLogs);
   const websocketEvents = useSecurityStore((state) => state.websocketEvents);
   const websocketStatistics = useSecurityStore((state) => state.websocketStatistics);
+  const apiAbuseEvents = useSecurityStore((state) => state.apiAbuseEvents);
+  const apiAbuseStatistics = useSecurityStore((state) => state.apiAbuseStatistics);
   const loadingStatistics = useSecurityStore((state) => state.loadingStatistics);
   const loadingAttempts = useSecurityStore((state) => state.loadingAttempts);
   const loadingBlockedIps = useSecurityStore((state) => state.loadingBlockedIps);
   const loadingLogs = useSecurityStore((state) => state.loadingLogs);
   const loadingWebsocketEvents = useSecurityStore((state) => state.loadingWebsocketEvents);
+  const loadingApiAbuseEvents = useSecurityStore((state) => state.loadingApiAbuseEvents);
   const error = useSecurityStore((state) => state.error);
 
   // Store 操作
@@ -52,11 +57,14 @@ export function useSecurity() {
   const updateSecurityLog = useSecurityStore((state) => state.updateSecurityLog);
   const setWebsocketEvents = useSecurityStore((state) => state.setWebsocketEvents);
   const setWebsocketStatistics = useSecurityStore((state) => state.setWebsocketStatistics);
+  const setApiAbuseEvents = useSecurityStore((state) => state.setApiAbuseEvents);
+  const setApiAbuseStatistics = useSecurityStore((state) => state.setApiAbuseStatistics);
   const setLoadingStatistics = useSecurityStore((state) => state.setLoadingStatistics);
   const setLoadingAttempts = useSecurityStore((state) => state.setLoadingAttempts);
   const setLoadingBlockedIps = useSecurityStore((state) => state.setLoadingBlockedIps);
   const setLoadingLogs = useSecurityStore((state) => state.setLoadingLogs);
   const setLoadingWebsocketEvents = useSecurityStore((state) => state.setLoadingWebsocketEvents);
+  const setLoadingApiAbuseEvents = useSecurityStore((state) => state.setLoadingApiAbuseEvents);
   const setError = useSecurityStore((state) => state.setError);
   const resetStore = useSecurityStore((state) => state.reset);
 
@@ -328,6 +336,60 @@ export function useSecurity() {
   }, [token, setWebsocketStatistics]);
 
   /**
+   * 加载接口滥用事件日志
+   */
+  const loadApiAbuseEvents = useCallback(
+    async (params?: {
+      endpoint?: string;
+      ipAddress?: string;
+      userId?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<SecurityResult> => {
+      if (!token) {
+        return { ok: false, message: "未登录" };
+      }
+      setLoadingApiAbuseEvents(true);
+      setError(null);
+      try {
+        const response = await getApiAbuseEvents(token, params);
+        if (response.success && response.data) {
+          setApiAbuseEvents(response.data);
+          return { ok: true };
+        }
+        return { ok: false, message: response.message || "获取接口滥用事件日志失败" };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "获取接口滥用事件日志失败";
+        setError(message);
+        return { ok: false, message };
+      } finally {
+        setLoadingApiAbuseEvents(false);
+      }
+    },
+    [token, setApiAbuseEvents, setLoadingApiAbuseEvents, setError]
+  );
+
+  /**
+   * 加载接口滥用统计信息
+   */
+  const loadApiAbuseStatistics = useCallback(async (): Promise<SecurityResult> => {
+    if (!token) {
+      return { ok: false, message: "未登录" };
+    }
+    try {
+      const response = await getApiAbuseStatistics(token);
+      if (response.success && response.data) {
+        setApiAbuseStatistics(response.data);
+        return { ok: true };
+      }
+      return { ok: false, message: response.message || "获取接口滥用统计信息失败" };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "获取接口滥用统计信息失败";
+      return { ok: false, message };
+    }
+  }, [token, setApiAbuseStatistics]);
+
+  /**
    * 重置
    */
   const reset = useCallback(() => {
@@ -342,11 +404,14 @@ export function useSecurity() {
     securityLogs,
     websocketEvents,
     websocketStatistics,
+    apiAbuseEvents,
+    apiAbuseStatistics,
     loadingStatistics,
     loadingAttempts,
     loadingBlockedIps,
     loadingLogs,
     loadingWebsocketEvents,
+    loadingApiAbuseEvents,
     error,
     // 方法
     loadStatistics,
@@ -359,6 +424,8 @@ export function useSecurity() {
     handleResolveEvent,
     loadWebsocketEvents,
     loadWebsocketStatistics,
+    loadApiAbuseEvents,
+    loadApiAbuseStatistics,
     reset,
   };
 }

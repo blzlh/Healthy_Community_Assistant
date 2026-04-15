@@ -12,13 +12,16 @@ import {
   Param,
   Request,
   UseGuards,
+  UseInterceptors,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { HealthConversationService, HealthData } from './health-conversation.service';
 import { SupabaseAuthGuard } from '@/auth/supabase-auth.guard';
+import { RateLimiterInterceptor } from '@/security/rate-limiter.interceptor';
 
 @Controller('health-conversations')
 @UseGuards(SupabaseAuthGuard)
+@UseInterceptors(RateLimiterInterceptor)
 export class HealthConversationController {
   constructor(
     private readonly conversationService: HealthConversationService,

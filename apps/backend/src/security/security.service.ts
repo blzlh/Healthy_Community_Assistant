@@ -7,7 +7,7 @@ import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { DbService } from '@/db/db.service';
-import { loginAttempts, ipBans, securityLogs, websocketEvents } from '@/db/schema';
+import { loginAttempts, ipBans, securityLogs, websocketEvents, apiAbuseEvents } from '@/db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
 
 // Redis 键前缀
@@ -15,6 +15,7 @@ const REDIS_PREFIX = {
   LOGIN_ATTEMPTS: 'security:login_attempts:',
   IP_BLOCKED: 'security:ip_blocked:',
   WS_SPAM: 'security:ws_spam:',
+  API_RATE: 'security:api_rate:',
 };
 
 // 暴力破解检测配置
@@ -29,6 +30,13 @@ const SPAM_CONFIG = {
   MAX_MESSAGES: 10, // 最大消息数
   WINDOW_SECONDS: 2, // 时间窗口（秒）
   COOLDOWN_SECONDS: 30, // 冷却时长（秒）
+};
+
+// 接口滥用检测配置
+const API_ABUSE_CONFIG = {
+  MAX_QPS: 100, // 最大 QPS
+  WINDOW_SECONDS: 30, // 时间窗口（秒）
+  RATE_LIMIT_SECONDS: 300, // 限流时长（秒）= 5分钟
 };
 
 @Injectable()
@@ -671,6 +679,201 @@ export class SecurityService {
         todayDisconnections: 0,
         todaySpamDetections: 0,
         todayMessages: 0,
+      };
+    }
+  }
+
+  // ==================== 接口滥用检测相关方法 ====================
+
+  /**
+   * 记录并检查接口调用频率
+   * @returns isAbused 是否滥用, currentQps 当前QPS, rateLimitRemaining 限流剩余时间
+   */
+  async checkApiRateLimit(
+    endpoint: string,
+    method: string,
+    ipAddress: string,
+    userId?: string,
+  ): Promise<{ isAbused: boolean; currentQps: number; rateLimitRemaining?: number }> {
+    try {
+      // 构建唯一键：endpoint + ip
+      const key = `${REDIS_PREFIX.API_RATE}${endpoint}:${ipAddress}`;
+
+      // 先检查是否已被限流
+      const rateLimitKey = `${key}:limited`;
+      const rateLimitRemaining = await this.redis.ttl(rateLimitKey);
+      if (rateLimitRemaining > 0) {
+        return { isAbused: true, currentQps: 0, rateLimitRemaining };
+      }
+
+      // 记录本次调用
+      const currentCount = await this.redis.incr(key);
+
+      // 首次设置过期时间（30秒窗口）
+      if (currentCount === 1) {
+        await this.redis.expire(key, API_ABUSE_CONFIG.WINDOW_SECONDS);
+      }
+
+      // 计算当前 QPS
+      const currentQps = Math.round(currentCount / API_ABUSE_CONFIG.WINDOW_SECONDS);
+
+      // 检测是否超限
+      if (currentQps >= API_ABUSE_CONFIG.MAX_QPS) {
+        return { isAbused: true, currentQps };
+      }
+
+      return { isAbused: false, currentQps };
+    } catch (error) {
+      this.logger.error('Failed to check API rate limit:', error);
+      return { isAbused: false, currentQps: 0 };
+    }
+  }
+
+  /**
+   * 处理接口滥用检测
+   */
+  async handleApiAbuseDetected(params: {
+    endpoint: string;
+    method: string;
+    ipAddress: string;
+    userId?: string;
+    userName?: string;
+    qps: number;
+    duration: number;
+  }): Promise<void> {
+    this.logger.warn(
+      `API abuse detected: ${params.method} ${params.endpoint} from IP=${params.ipAddress}, QPS=${params.qps}`,
+    );
+
+    try {
+      const key = `${REDIS_PREFIX.API_RATE}${params.endpoint}:${params.ipAddress}`;
+
+      // 1. 设置限流标记
+      const rateLimitKey = `${key}:limited`;
+      await this.redis.setex(rateLimitKey, API_ABUSE_CONFIG.RATE_LIMIT_SECONDS, '1');
+
+      // 2. 清除计数器
+      await this.redis.del(key);
+
+      // 3. 记录接口滥用事件
+      await this.dbService.db.insert(apiAbuseEvents).values({
+        endpoint: params.endpoint,
+        method: params.method,
+        ipAddress: params.ipAddress,
+        userId: params.userId || null,
+        userName: params.userName || null,
+        qps: params.qps.toString(),
+        duration: params.duration.toString(),
+        actionTaken: 'rate_limited',
+        rateLimitDuration: API_ABUSE_CONFIG.RATE_LIMIT_SECONDS.toString(),
+      });
+
+      // 4. 记录安全事件日志
+      await this.logSecurityEvent({
+        type: 'api_abuse',
+        severity: 'high',
+        ipAddress: params.ipAddress,
+        userId: params.userId,
+        endpoint: params.endpoint,
+        details: {
+          method: params.method,
+          qps: params.qps,
+          duration: params.duration,
+          rateLimitSeconds: API_ABUSE_CONFIG.RATE_LIMIT_SECONDS,
+        },
+        actionTaken: 'rate_limited',
+      });
+    } catch (error) {
+      this.logger.error('Failed to handle API abuse detection:', error);
+    }
+  }
+
+  /**
+   * 获取接口滥用事件日志
+   */
+  async getApiAbuseEvents(params: {
+    endpoint?: string;
+    ipAddress?: string;
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    try {
+      const { endpoint, ipAddress, userId, limit = 100, offset = 0 } = params;
+
+      let query = this.dbService.db
+        .select()
+        .from(apiAbuseEvents)
+        .orderBy(desc(apiAbuseEvents.createdAt))
+        .limit(limit)
+        .offset(offset)
+        .$dynamic();
+
+      const conditions: any[] = [];
+      if (endpoint) {
+        conditions.push(eq(apiAbuseEvents.endpoint, endpoint));
+      }
+      if (ipAddress) {
+        conditions.push(eq(apiAbuseEvents.ipAddress, ipAddress));
+      }
+      if (userId) {
+        conditions.push(eq(apiAbuseEvents.userId, userId));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      return await query;
+    } catch (error) {
+      this.logger.error('Failed to get API abuse events:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取接口滥用统计数据
+   */
+  async getApiAbuseStatistics() {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // 统计今日接口滥用事件
+      const todayEvents = await this.dbService.db
+        .select()
+        .from(apiAbuseEvents)
+        .where(gte(apiAbuseEvents.createdAt, today));
+
+      // 按接口分组统计
+      const byEndpoint = todayEvents.reduce(
+        (acc, event) => {
+          acc[event.endpoint] = (acc[event.endpoint] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      // 获取当前被限流的数量（从 Redis）
+      const rateLimitKeys = await this.redis.keys(`${REDIS_PREFIX.API_RATE}*:limited`);
+      const currentRateLimited = rateLimitKeys.length;
+
+      return {
+        todayAbuseDetections: todayEvents.length,
+        currentRateLimited,
+        byEndpoint,
+        topEndpoints: Object.entries(byEndpoint)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([endpoint, count]) => ({ endpoint, count })),
+      };
+    } catch (error) {
+      this.logger.error('Failed to get API abuse statistics:', error);
+      return {
+        todayAbuseDetections: 0,
+        currentRateLimited: 0,
+        byEndpoint: {},
+        topEndpoints: [],
       };
     }
   }
