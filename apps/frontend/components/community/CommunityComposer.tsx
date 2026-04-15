@@ -45,15 +45,15 @@ export function CommunityComposer({
   const [draft, setDraft] = useState<PostDraft>(
     initialData
       ? {
-          contentJson: initialData.contentJson,
-          contentText: initialData.contentText,
-          isEmpty: false,
-        }
+        contentJson: initialData.contentJson,
+        contentText: initialData.contentText,
+        isEmpty: false,
+      }
       : {
-          contentJson: { type: "doc", content: [] },
-          contentText: "",
-          isEmpty: true,
-        }
+        contentJson: { type: "doc", content: [] },
+        contentText: "",
+        isEmpty: true,
+      }
   );
   const [images, setImages] = useState<string[]>(initialData?.images ?? []);
 

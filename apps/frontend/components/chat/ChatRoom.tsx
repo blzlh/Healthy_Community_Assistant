@@ -10,6 +10,7 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { ChatSkeleton } from "@/components/chat/ChatSkeleton";
+import { BackToHome } from "@/components/BackToHome";
 
 export function ChatRoom() {
   const token = useAuthStore((state) => state.token);
@@ -39,7 +40,9 @@ export function ChatRoom() {
 
   return (
     <div className="flex flex-col gap-4">
-      <ChatHeader />
+      <div>
+        <ChatHeader />
+      </div>
       {loading ? <ChatSkeleton /> : <ChatMessageList />}
       {user?.isBanned ? (
         <div className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-200">

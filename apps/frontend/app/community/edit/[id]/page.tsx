@@ -1,40 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CommunityComposer } from "@/components/community/CommunityComposer";
 import { useCommunity } from "@/hooks/use-community";
 import { Spin, Modal } from "antd";
-import type { CommunityPost } from "@/services/community";
 import { Icon } from "@iconify/react";
 import { Toast } from "@/components/ui/Toast/Toast";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function CommunityEditPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
-  const { loadPosts, deletePost } = useCommunity();
-  const [post, setPost] = useState<CommunityPost | null>(null);
+
+  const token = useAuthStore((state) => state.token);
+  const hydrated = useAuthStore((state) => state.hydrated);
+
+  // 从 hook 获取 posts（来自 store）和方法
+  const { posts, loadPosts, deletePost } = useCommunity();
+
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  // 使用 ref 防止重复请求
+  const hasLoadedRef = useRef(false);
+
   const modalCancelButtonClass =
     "!bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20";
   const modalDangerOkButtonClass =
     "!bg-red-500/10 !text-red-400 !border-red-500/20 hover:!bg-red-500/20 hover:!border-red-500/30";
 
+  // 从 store 的 posts 中查找当前要编辑的帖子
+  const post = posts.find((p) => p.id === postId);
+
   useEffect(() => {
+    // 等待认证状态加载完成
+    if (!hydrated) return;
+
+    // 未登录则直接返回
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    // 如果已经加载过，不再重复请求
+    if (hasLoadedRef.current) return;
+
+    // 如果 store 中已经有数据，不需要重新请求
+    if (posts.length > 0) {
+      setLoading(false);
+      hasLoadedRef.current = true;
+      return;
+    }
+
     async function fetchPost() {
-      const result = await loadPosts("mine");
-      if (result.ok) {
-        const found = result.posts?.find((p) => p.id === postId);
-        if (found) {
-          setPost(found);
-        }
-      }
+      hasLoadedRef.current = true;
+      await loadPosts("mine");
       setLoading(false);
     }
     fetchPost();
-  }, [postId, loadPosts]);
+  }, [hydrated, token, posts.length, loadPosts]);
 
   const handleDelete = () => {
     Modal.confirm({
@@ -82,7 +107,7 @@ export default function CommunityEditPage() {
     });
   };
 
-  if (loading) {
+  if (!hydrated || loading) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
         <Spin size="large" />

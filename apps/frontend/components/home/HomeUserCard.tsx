@@ -20,7 +20,7 @@ export function HomeAuthActions() {
   const userMenuItems = useMemo(() => {
     const items = [
       { key: "edit", label: "编辑资料" },
-      { key: "profile", label: "个人中心" },
+      { key: "profile", label: "个人健康中心" },
     ];
 
     if (user?.isAdmin) {
@@ -56,7 +56,7 @@ export function HomeAuthActions() {
     );
   }
 
-  const displayName = user?.name ?? user?.email ;
+  const displayName = user?.name ?? user?.email;
   const displayEmail = user?.email ?? "未绑定邮箱";
 
   return (
@@ -69,7 +69,7 @@ export function HomeAuthActions() {
           onClick: ({ key }) => {
             if (key === "logout") {
               clear();
-            } 
+            }
             if (key === "edit") {
               setOpen(true);
             }
@@ -98,7 +98,7 @@ export function HomeAuthActions() {
             </div>
           </>
         )}
-        
+
       >
         <button
           type="button"
