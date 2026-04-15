@@ -2,7 +2,7 @@
  * 健康分析相关 DTO
  */
 
-import { IsOptional, IsNumber, IsString, Min, Max } from 'class-validator';
+import { IsOptional, IsNumber, IsString, Min, Max, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AnalyzeHealthDto {
@@ -55,6 +55,11 @@ export class AnalyzeHealthDto {
     @IsOptional()
     @IsString()
     sessionId?: string;
+
+    @ApiPropertyOptional({ example: 'uuid', description: '对话ID（用于保存消息到数据库）' })
+    @IsOptional()
+    @IsUUID()
+    conversationId?: string;
 }
 
 export class ContinueConversationDto {
@@ -65,6 +70,11 @@ export class ContinueConversationDto {
     @ApiProperty({ example: 'user-session-123', description: '会话ID' })
     @IsString()
     sessionId: string;
+
+    @ApiPropertyOptional({ example: 'uuid', description: '对话ID（用于保存消息到数据库）' })
+    @IsOptional()
+    @IsUUID()
+    conversationId?: string;
 }
 
 export class HealthAnalysisResponseDto {
