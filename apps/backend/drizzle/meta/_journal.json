@@ -22,6 +22,20 @@
       "when": 1774342772594,
       "tag": "0002_last_the_executioner",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776233202918,
+      "tag": "0003_high_trauma",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776234408169,
+      "tag": "0004_conscious_mach_iv",
+      "breakpoints": true
     }
   ]
 }

@@ -7,13 +7,14 @@ import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { DbService } from '@/db/db.service';
-import { loginAttempts, ipBans, securityLogs } from '@/db/schema';
+import { loginAttempts, ipBans, securityLogs, websocketEvents } from '@/db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
 
 // Redis 键前缀
 const REDIS_PREFIX = {
   LOGIN_ATTEMPTS: 'security:login_attempts:',
   IP_BLOCKED: 'security:ip_blocked:',
+  WS_SPAM: 'security:ws_spam:',
 };
 
 // 暴力破解检测配置
@@ -21,6 +22,13 @@ const BRUTE_FORCE_CONFIG = {
   MAX_ATTEMPTS: 5, // 最大尝试次数
   WINDOW_SECONDS: 60, // 时间窗口（秒）
   BLOCK_DURATION_SECONDS: 600, // 封禁时长（秒）= 10分钟
+};
+
+// WebSocket 刷屏检测配置
+const SPAM_CONFIG = {
+  MAX_MESSAGES: 10, // 最大消息数
+  WINDOW_SECONDS: 2, // 时间窗口（秒）
+  COOLDOWN_SECONDS: 30, // 冷却时长（秒）
 };
 
 @Injectable()
@@ -427,6 +435,7 @@ export class SecurityService {
         todaySecurityEvents: todayEvents.length,
         eventsByType,
         bruteForceDetections: eventsByType['brute_force'] || 0,
+        spamDetections: eventsByType['spam'] || 0,
       };
     } catch (error) {
       this.logger.error('Failed to get statistics:', error);
@@ -436,6 +445,232 @@ export class SecurityService {
         todaySecurityEvents: 0,
         eventsByType: {},
         bruteForceDetections: 0,
+        spamDetections: 0,
+      };
+    }
+  }
+
+  // ==================== WebSocket 刷屏检测相关方法 ====================
+
+  /**
+   * 检查 WebSocket 消息是否刷屏
+   * @returns isSpam 是否刷屏, currentCount 当前消息数
+   */
+  async checkWebSocketSpam(
+    socketId: string,
+    userId?: string,
+  ): Promise<{ isSpam: boolean; currentCount: number; cooldownRemaining?: number }> {
+    try {
+      // 先检查是否在冷却期
+      const cooldownKey = `${REDIS_PREFIX.WS_SPAM}cooldown:${socketId}`;
+      const cooldownRemaining = await this.redis.ttl(cooldownKey);
+      if (cooldownRemaining > 0) {
+        return { isSpam: true, currentCount: 0, cooldownRemaining };
+      }
+
+      // 检查消息频率
+      const key = `${REDIS_PREFIX.WS_SPAM}${socketId}`;
+      const currentCount = await this.redis.incr(key);
+
+      // 首次设置过期时间
+      if (currentCount === 1) {
+        await this.redis.expire(key, SPAM_CONFIG.WINDOW_SECONDS);
+      }
+
+      // 检测刷屏
+      if (currentCount >= SPAM_CONFIG.MAX_MESSAGES) {
+        return { isSpam: true, currentCount };
+      }
+
+      return { isSpam: false, currentCount };
+    } catch (error) {
+      this.logger.error('Failed to check WebSocket spam:', error);
+      return { isSpam: false, currentCount: 0 };
+    }
+  }
+
+  /**
+   * 处理 WebSocket 刷屏检测
+   */
+  async handleSpamDetected(params: {
+    socketId: string;
+    userId?: string;
+    userName?: string;
+    ipAddress?: string;
+    roomId?: string;
+    messageCount: number;
+  }): Promise<void> {
+    this.logger.warn(
+      `Spam detected from socket=${params.socketId}, user=${params.userId}, messages=${params.messageCount}`,
+    );
+
+    try {
+      // 1. 设置冷却期
+      const cooldownKey = `${REDIS_PREFIX.WS_SPAM}cooldown:${params.socketId}`;
+      await this.redis.setex(cooldownKey, SPAM_CONFIG.COOLDOWN_SECONDS, '1');
+
+      // 2. 清除计数器
+      const key = `${REDIS_PREFIX.WS_SPAM}${params.socketId}`;
+      await this.redis.del(key);
+
+      // 3. 记录 WebSocket 事件日志
+      await this.dbService.db.insert(websocketEvents).values({
+        eventType: 'spam_detected',
+        socketId: params.socketId,
+        userId: params.userId || null,
+        userName: params.userName || null,
+        ipAddress: params.ipAddress || null,
+        roomId: params.roomId || null,
+        messageCount: params.messageCount.toString(),
+        reason: `${SPAM_CONFIG.WINDOW_SECONDS}秒内发送${params.messageCount}条消息`,
+      });
+
+      // 4. 记录安全事件日志
+      await this.logSecurityEvent({
+        type: 'spam',
+        severity: 'medium',
+        ipAddress: params.ipAddress,
+        userId: params.userId,
+        endpoint: 'websocket',
+        details: {
+          socketId: params.socketId,
+          roomId: params.roomId,
+          messageCount: params.messageCount,
+          windowSeconds: SPAM_CONFIG.WINDOW_SECONDS,
+          cooldownSeconds: SPAM_CONFIG.COOLDOWN_SECONDS,
+        },
+        actionTaken: 'disconnected',
+      });
+    } catch (error) {
+      this.logger.error('Failed to handle spam detection:', error);
+    }
+  }
+
+  /**
+   * 记录 WebSocket 连接事件
+   */
+  async logWebSocketConnect(params: {
+    socketId: string;
+    userId?: string;
+    userName?: string;
+    ipAddress?: string;
+  }): Promise<void> {
+    try {
+      await this.dbService.db.insert(websocketEvents).values({
+        eventType: 'connect',
+        socketId: params.socketId,
+        userId: params.userId || null,
+        userName: params.userName || null,
+        ipAddress: params.ipAddress || null,
+      });
+    } catch (error) {
+      this.logger.error('Failed to log WebSocket connect:', error);
+    }
+  }
+
+  /**
+   * 记录 WebSocket 断开事件
+   */
+  async logWebSocketDisconnect(params: {
+    socketId: string;
+    userId?: string;
+    userName?: string;
+    ipAddress?: string;
+    reason?: string;
+  }): Promise<void> {
+    try {
+      await this.dbService.db.insert(websocketEvents).values({
+        eventType: 'disconnect',
+        socketId: params.socketId,
+        userId: params.userId || null,
+        userName: params.userName || null,
+        ipAddress: params.ipAddress || null,
+        reason: params.reason || null,
+      });
+    } catch (error) {
+      this.logger.error('Failed to log WebSocket disconnect:', error);
+    }
+  }
+
+  /**
+   * 获取 WebSocket 事件日志
+   */
+  async getWebSocketEvents(params: {
+    eventType?: string;
+    socketId?: string;
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    try {
+      const { eventType, socketId, userId, limit = 100, offset = 0 } = params;
+
+      let query = this.dbService.db
+        .select()
+        .from(websocketEvents)
+        .orderBy(desc(websocketEvents.createdAt))
+        .limit(limit)
+        .offset(offset)
+        .$dynamic();
+
+      const conditions: any[] = [];
+      if (eventType) {
+        conditions.push(eq(websocketEvents.eventType, eventType));
+      }
+      if (socketId) {
+        conditions.push(eq(websocketEvents.socketId, socketId));
+      }
+      if (userId) {
+        conditions.push(eq(websocketEvents.userId, userId));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      return await query;
+    } catch (error) {
+      this.logger.error('Failed to get WebSocket events:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取 WebSocket 统计数据
+   */
+  async getWebSocketStatistics() {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // 统计今日 WebSocket 事件
+      const todayEvents = await this.dbService.db
+        .select()
+        .from(websocketEvents)
+        .where(gte(websocketEvents.createdAt, today));
+
+      // 按类型统计
+      const eventsByType = todayEvents.reduce(
+        (acc, event) => {
+          acc[event.eventType] = (acc[event.eventType] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      return {
+        todayConnections: eventsByType['connect'] || 0,
+        todayDisconnections: eventsByType['disconnect'] || 0,
+        todaySpamDetections: eventsByType['spam_detected'] || 0,
+        todayMessages: eventsByType['message'] || 0,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get WebSocket statistics:', error);
+      return {
+        todayConnections: 0,
+        todayDisconnections: 0,
+        todaySpamDetections: 0,
+        todayMessages: 0,
       };
     }
   }

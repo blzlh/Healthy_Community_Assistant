@@ -11,6 +11,7 @@ import { Logger } from '@nestjs/common';
 import type { DefaultEventsMap, Server, Socket } from 'socket.io';
 import { AuthService } from '../auth/auth.service';
 import { DbService } from '../db/db.service';
+import { SecurityService } from '../security/security.service';
 import { chatHistory, profiles } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
@@ -62,6 +63,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly authService: AuthService,
     private readonly dbService: DbService,
+    private readonly securityService: SecurityService,
   ) {}
 
   async handleConnection(client: AuthedSocket) {
@@ -103,6 +105,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('chat:history', { roomId: 'global', messages: history });
 
       this.logger.log(`connected socket=${client.id} user=${user.id}`);
+
+      // 记录 WebSocket 连接事件
+      const ipAddress = this.extractIpAddress(client);
+      await this.securityService.logWebSocketConnect({
+        socketId: client.id,
+        userId: user.id,
+        userName: profile?.name || undefined,
+        ipAddress,
+      });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unauthorized';
       this.logger.warn(`unauthorized socket=${client.id} message=${message}`);
@@ -111,10 +122,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: AuthedSocket) {
+  async handleDisconnect(client: AuthedSocket) {
     this.logger.log(
       `disconnected socket=${client.id} user=${client.data.user?.id ?? 'unknown'}`,
     );
+
+    // 记录 WebSocket 断开事件
+    await this.securityService.logWebSocketDisconnect({
+      socketId: client.id,
+      userId: client.data.user?.id,
+      userName: client.data.user?.name || undefined,
+      ipAddress: this.extractIpAddress(client),
+      reason: 'client_disconnect',
+    });
   }
 
   @SubscribeMessage('chat:join')
@@ -166,7 +186,42 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    // 检查刷屏
+    const ipAddress = this.extractIpAddress(client);
     const roomId = (payload.roomId ?? 'global').trim() || 'global';
+    const spamCheck = await this.securityService.checkWebSocketSpam(
+      client.id,
+      user.id,
+    );
+
+    if (spamCheck.isSpam) {
+      if (spamCheck.cooldownRemaining && spamCheck.cooldownRemaining > 0) {
+        client.emit('chat:error', {
+          message: `您发送消息过快，请等待 ${spamCheck.cooldownRemaining} 秒后再试`,
+          code: 'RATE_LIMITED',
+          cooldownRemaining: spamCheck.cooldownRemaining,
+        });
+        return;
+      }
+
+      // 记录刷屏事件并断开连接
+      await this.securityService.handleSpamDetected({
+        socketId: client.id,
+        userId: user.id,
+        userName: user.name || undefined,
+        ipAddress,
+        roomId,
+        messageCount: spamCheck.currentCount,
+      });
+
+      client.emit('chat:error', {
+        message: '检测到刷屏行为，连接已断开',
+        code: 'SPAM_DETECTED',
+      });
+      client.disconnect(true);
+      return;
+    }
+
     const text = (payload.text ?? '').trim();
     if (!text) {
       return;
@@ -249,5 +304,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     return '';
+  }
+
+  private extractIpAddress(client: Socket): string {
+    // 优先从 headers 获取真实 IP（经过代理时）
+    const forwarded = client.handshake.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+
+    const realIp = client.handshake.headers['x-real-ip'];
+    if (typeof realIp === 'string') {
+      return realIp;
+    }
+
+    // 直接连接时的 IP
+    return client.handshake.address || 'unknown';
   }
 }

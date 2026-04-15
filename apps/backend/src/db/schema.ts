@@ -124,3 +124,20 @@ export const securityLogs = pgTable('security_logs', {
   resolvedBy: uuid('resolved_by'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+/**
+ * WebSocket 事件日志表 - 记录连接、断开、消息事件
+ */
+export const websocketEvents = pgTable('websocket_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  eventType: text('event_type').notNull(), // 'connect', 'disconnect', 'message', 'spam_detected'
+  socketId: text('socket_id').notNull(),
+  userId: uuid('user_id'),
+  userName: text('user_name'), // 用户名快照
+  ipAddress: text('ip_address'),
+  roomId: text('room_id'),
+  messagePreview: text('message_preview'), // 消息预览（仅 message 事件）
+  messageCount: text('message_count').default('0'), // 刷屏时的消息计数
+  reason: text('reason'), // 断开原因或刷屏原因
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});

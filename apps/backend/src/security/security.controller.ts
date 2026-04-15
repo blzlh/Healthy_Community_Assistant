@@ -234,4 +234,56 @@ export class SecurityController {
       throw new HttpException('操作失败，事件可能不存在', HttpStatus.NOT_FOUND);
     }
   }
+
+  // ==================== WebSocket 事件日志相关接口 ====================
+
+  /**
+   * 获取 WebSocket 事件日志
+   * GET /security/websocket-events
+   */
+  @Get('websocket-events')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取WebSocket事件日志', description: '获取WebSocket连接、断开、刷屏事件日志' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getWebSocketEvents(
+    @Request() req: any,
+    @Query('eventType') eventType?: string,
+    @Query('socketId') socketId?: string,
+    @Query('userId') userId?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    await this.checkAdmin(req.user.id);
+
+    const events = await this.securityService.getWebSocketEvents({
+      eventType,
+      socketId,
+      userId,
+      limit: limit ? parseInt(limit, 10) : 100,
+      offset: offset ? parseInt(offset, 10) : 0,
+    });
+
+    return {
+      success: true,
+      data: events,
+    };
+  }
+
+  /**
+   * 获取 WebSocket 统计信息
+   * GET /security/websocket-statistics
+   */
+  @Get('websocket-statistics')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取WebSocket统计信息', description: '获取今日WebSocket连接、断开、刷屏统计' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getWebSocketStatistics(@Request() req: any) {
+    await this.checkAdmin(req.user.id);
+
+    const statistics = await this.securityService.getWebSocketStatistics();
+    return {
+      success: true,
+      data: statistics,
+    };
+  }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "websocket_events" ADD COLUMN "user_name" text;
