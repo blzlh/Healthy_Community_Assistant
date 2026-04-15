@@ -159,14 +159,26 @@ export function SecurityContainer() {
             <h1 className="text-3xl font-bold">安全监控中心</h1>
             <p className="text-white/60 mt-1">监控安全事件、封禁IP、查看登录日志</p>
           </div>
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            className="!border-white/20 !bg-white/5 !text-white hover:!bg-white/10"
-          >
-            <Icon icon="lucide:refresh-cw" className="w-4 h-4 mr-2" />
-            刷新数据
-          </Button>
+          <div className="flex items-center gap-3">
+            <a
+              href={process.env.NEXT_PUBLIC_KIBANA_URL || "http://localhost:5601"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-colors text-sm"
+            >
+              <Icon icon="lucide:bar-chart-3" className="w-4 h-4" />
+              Kibana 日志分析
+              <Icon icon="lucide:external-link" className="w-3 h-3" />
+            </a>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="!border-white/20 !bg-white/5 !text-white hover:!bg-white/10"
+            >
+              <Icon icon="lucide:refresh-cw" className="w-4 h-4 mr-2" />
+              刷新数据
+            </Button>
+          </div>
         </div>
 
         {/* 错误提示 */}
