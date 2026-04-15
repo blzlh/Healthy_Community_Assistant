@@ -31,6 +31,8 @@ export interface ChatMessage {
   isStreaming?: boolean;
   /** 关联的健康数据快照（仅首条 AI 消息） */
   healthDataSnapshot?: HealthFormData;
+  /** 是否隐藏消息（不渲染，但数据存在） */
+  hidden?: boolean;
 }
 
 /**

@@ -43,7 +43,7 @@ const inputFields = [
     label: "心率",
     placeholder: "如: 72",
     unit: "次/分钟",
-    icon: "healthicons:heart-rate",
+    icon: "lucide:heart-pulse",
     iconColor: "text-pink-400",
   },
   {
@@ -51,7 +51,7 @@ const inputFields = [
     label: "空腹血糖",
     placeholder: "如: 5.5",
     unit: "mmol/L",
-    icon: "healthicons:drop",
+    icon: "lucide:droplet",
     iconColor: "text-blue-400",
   },
   {

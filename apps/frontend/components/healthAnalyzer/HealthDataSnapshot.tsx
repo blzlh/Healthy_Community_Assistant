@@ -27,7 +27,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "心率",
 		placeholder: "如: 72",
 		unit: "次/分钟",
-		icon: "healthicons:heart-rate",
+		icon: "lucide:heart-pulse",
 		iconColor: "text-pink-400",
 	},
 	{
@@ -35,7 +35,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "空腹血糖",
 		placeholder: "如: 5.5",
 		unit: "mmol/L",
-		icon: "healthicons:drop",
+		icon: "lucide:droplet",
 		iconColor: "text-blue-400",
 	},
 	{
@@ -131,17 +131,19 @@ export function HealthDataSnapshot({
 						<span className="text-xs text-white/50">编辑健康数据</span>
 					</div>
 					<div className="flex items-center gap-1">
-						<button
+						<Button
 							type="button"
+							size="xs"
 							onClick={handleCancelEdit}
-							className="text-xs text-white/40 hover:text-white/60 px-2 py-1"
+							className="!text-white/40 hover:!text-white/60"
 						>
 							取消
-						</button>
+						</Button>
 						<Button
 							type="submit"
+							size="xs"
 							disabled={loading}
-							className="h-6 px-2 text-xs !bg-sky-600 !text-white hover:!bg-sky-500"
+							className="!bg-sky-600 !text-white hover:!bg-sky-500"
 						>
 							{loading ? "提交中..." : "提交分析"}
 						</Button>
@@ -175,14 +177,15 @@ export function HealthDataSnapshot({
 					<span className="text-xs text-white/50">本次分析数据</span>
 				</div>
 				{editable && (
-					<button
+					<Button
 						type="button"
+						size="xs"
 						onClick={handleStartEdit}
-						className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
+						className="!text-sky-400 hover:!text-sky-300"
 					>
-						<Icon icon="lucide:edit-2" className="w-3 h-3" />
+						<Icon icon="lucide:edit-2" className="w-3 h-3 mr-1" />
 						修改
-					</button>
+					</Button>
 				)}
 			</div>
 			<div className="flex flex-wrap gap-2">

@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { Icon } from "@iconify/react";
-import { Button } from "@/components/ui/shadcn/button";
+import { Button } from "antd";
 import { HealthFormData, HealthFieldConfig } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
     label: "心率",
     placeholder: "如: 72",
     unit: "次/分钟",
-    icon: "healthicons:heart-rate",
+    icon: "lucide:heart-pulse",
     iconColor: "text-pink-400",
   },
   {
@@ -50,7 +50,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
     label: "空腹血糖",
     placeholder: "如: 5.5",
     unit: "mmol/L",
-    icon: "healthicons:drop",
+    icon: "lucide:droplet",
     iconColor: "text-blue-400",
   },
   {
@@ -121,14 +121,14 @@ function CollapsedPreview({
           </div>
         </div>
       </div>
-      <button
-        type="button"
+      <Button
+        type="text"
         onClick={onExpand}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+        className="shrink-0 !text-white/60 hover:!text-white"
         title="展开数据面板"
       >
         <Icon icon="lucide:chevron-down" className="w-5 h-5" />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -188,14 +188,14 @@ export function HealthDataPanel({
             <Icon icon="healthicons:clipboard-text" className="w-4 h-4 text-sky-400" />
             <span className="text-sm font-medium text-white">健康数据</span>
           </div>
-          <button
-            type="button"
+          <Button
+            type="text"
             onClick={handleToggleCollapse}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="!text-white/60 hover:!text-white"
             title="收起数据面板"
           >
             <Icon icon="lucide:chevron-up" className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* 表单 */}
@@ -223,18 +223,19 @@ export function HealthDataPanel({
           <div className="flex gap-2 pt-2 sticky bottom-0 bg-white/5 pb-1">
             {onReset && (
               <Button
-                type="button"
-                variant="outline"
+                type="default"
                 onClick={onReset}
-                className="flex-1 h-9 !border-white/10 !text-white/60 hover:!text-white hover:!bg-white/10"
+                className="flex-1 h-9 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20"
               >
                 清空
               </Button>
             )}
             <Button
-              type="submit"
+              type="primary"
+              htmlType="submit"
               disabled={loading}
-              className="flex-1 h-9 !bg-sky-600 !text-white hover:!bg-sky-500 disabled:!opacity-50"
+              loading={loading}
+              className="flex-1 h-9 !bg-zinc-800 !text-white hover:!bg-zinc-700 disabled:!opacity-50"
             >
               {loading ? "分析中..." : "开始分析"}
             </Button>
@@ -248,21 +249,22 @@ export function HealthDataPanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/10 bg-white/5 overflow-hidden",
+        "rounded-xl border border-white/10 bg-white/5 overflow-hidden flex flex-col",
         className
       )}
     >
       {/* 头部 */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <Icon icon="healthicons:clipboard-text" className="w-5 h-5 text-sky-400" />
           <span className="font-medium text-white">数据录入</span>
         </div>
+        <span className="text-xs text-white/40">至少填写一项</span>
       </div>
 
       {/* 表单 */}
-      <form onSubmit={onSubmit} className="p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <form onSubmit={onSubmit} className="p-4 flex-1 flex flex-col">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {HEALTH_FIELDS.map((field) => (
             <div
               key={field.name}
@@ -285,20 +287,21 @@ export function HealthDataPanel({
           ))}
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-4 mt-auto">
           <Button
-            type="submit"
+            type="primary"
+            htmlType="submit"
             disabled={loading}
-            className="flex w-[90%] h-11 !bg-sky-600 !text-white hover:!bg-sky-500 disabled:!opacity-50"
+            loading={loading}
+            className="flex-1 h-11 !bg-zinc-800 !text-white hover:!bg-zinc-700 disabled:!opacity-50"
           >
-            <Icon icon="healthicons:analysis" className="w-4 h-4 mr-2" />
             {loading ? "分析中..." : "开始 AI 分析"}
           </Button>
           {onReset && (
             <Button
-              type="button"
+              type="default"
               onClick={onReset}
-              className="flex-1 justify-center items-center !border-white/10 h-11 !text-white/60 hover:!text-white hover:!bg-white/10"
+              className="h-11 px-4 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20"
             >
               重置
             </Button>

@@ -18,6 +18,8 @@ interface HealthChatComposerProps {
   className?: string;
   /** AI 生成的建议问题 */
   suggestedQuestions?: string[];
+  /** 是否显示建议问题（默认 true） */
+  showSuggestions?: boolean;
 }
 
 /**
@@ -109,6 +111,7 @@ export function HealthChatComposer({
   placeholder = "输入您的问题...",
   className,
   suggestedQuestions = [],
+  showSuggestions = true,
 }: HealthChatComposerProps) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -122,11 +125,14 @@ export function HealthChatComposer({
 
   // 合并 AI 建议和默认建议
   const displaySuggestions = useMemo(() => {
+    if (!showSuggestions) {
+      return [];
+    }
     if (suggestedQuestions.length > 0) {
       return suggestedQuestions;
     }
     return DEFAULT_SUGGESTIONS;
-  }, [suggestedQuestions]);
+  }, [suggestedQuestions, showSuggestions]);
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -155,20 +161,16 @@ export function HealthChatComposer({
       {!loading && displaySuggestions.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {displaySuggestions.map((suggestion, index) => (
-            <button
+            <Button
               key={`suggestion-${index}`}
+              variant="outline"
+              size="sm"
               onClick={() => handleSuggestionClick(suggestion)}
               disabled={disabled}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs",
-                "bg-white/5 border border-white/10 text-white/60",
-                "hover:bg-white/10 hover:text-white/80 hover:border-white/20",
-                "transition-colors duration-200",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
-              )}
+              className="!rounded-full !bg-white/5 !border-white/10 !text-white/60 hover:!bg-white/10 hover:!text-white/80 hover:!border-white/20"
             >
               {suggestion}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -185,7 +187,7 @@ export function HealthChatComposer({
             disabled={disabled}
             placeholder={placeholder}
             className={cn(
-              "w-full rounded-xl border bg-black/30 px-4 py-3 pr-12",
+              "w-full rounded-xl border bg-black/30 px-4 py-2 pr-12",
               "text-white placeholder:text-white/40",
               "focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50",
               "border-white/10",
@@ -207,28 +209,28 @@ export function HealthChatComposer({
             type="button"
             onClick={onAbort}
             variant="outline"
+            size="icon"
             className={cn(
-              "h-11 px-4",
+              "h-10 w-10 rounded-xl shrink-0",
               "!border-red-500/30 !bg-red-500/10",
               "text-red-400 hover:!bg-red-500/20"
             )}
           >
-            <Icon icon="healthicons:stop" className="w-4 h-4 mr-1" />
-            停止
+            <Icon icon="material-symbols:stop-circle" className="w-5 h-5" />
           </Button>
         ) : (
           <Button
             type="button"
             onClick={handleSend}
             disabled={disabled || !text.trim()}
+            size="icon"
             className={cn(
-              "h-11 px-4",
+              "h-10 w-10 rounded-xl shrink-0",
               "!bg-zinc-800 !text-white hover:!bg-zinc-700",
               "disabled:!opacity-50 disabled:cursor-not-allowed"
             )}
           >
-            <Icon icon="healthicons:send" className="w-4 h-4 mr-1" />
-            发送
+            <Icon icon="mynaui:send-solid" className="w-5 h-5" />
           </Button>
         )}
       </div>

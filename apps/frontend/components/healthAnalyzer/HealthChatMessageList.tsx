@@ -15,6 +15,7 @@ import { HealthDataSnapshot } from "./HealthDataSnapshot";
 import { cn } from "@/lib/utils";
 import { ChatScrollbar } from "@/components/chat/ChatScrollbar";
 import { useAuthStore } from "@/store/auth-store";
+import AIAvatar from "@/public/images/1.png";
 
 /**
  * Markdown 自定义组件样式配置
@@ -122,9 +123,9 @@ interface HealthChatMessageListProps {
 /**
  * 单条消息组件
  */
-function MessageItem({ 
-  message, 
-  userAvatar, 
+function MessageItem({
+  message,
+  userAvatar,
   userName,
   onDataUpdate,
   onDataSubmit,
@@ -160,9 +161,14 @@ function MessageItem({
           {avatarFallback}
         </Avatar>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/20 border border-emerald-500/30">
-          <Icon icon="healthicons:ai" className="w-4 h-4 text-emerald-400" />
-        </div>
+        <Avatar
+          className="shrink-0 bg-zinc-700"
+          size={32}
+          src={AIAvatar.src}
+        >
+          AI
+        </Avatar>
+
       )}
 
       {/* 消息内容 */}
@@ -193,15 +199,15 @@ function MessageItem({
         {/* 消息气泡 */}
         <div
           className={cn(
-            "rounded-2xl px-4 py-2 text-sm text-white",
+            "rounded-2xl px-4 py-2 text-sm text-white border",
             isUser
-              ? "w-fit max-w-[70%] whitespace-pre-wrap break-words bg-sky-500/20 border border-sky-500/30 rounded-tr-none"
-              : "w-full bg-white/5 border border-white/10 rounded-tl-none"
+              ? "w-fit max-w-[70%] whitespace-pre-wrap break-words bg-sky-500/20 border-sky-500/30 rounded-tr-none"
+              : "w-full bg-white/5 border-white/10 rounded-tl-none"
           )}
         >
           {/* 健康数据快照（仅首条 AI 消息显示） */}
           {!isUser && message.healthDataSnapshot && (
-            <HealthDataSnapshot 
+            <HealthDataSnapshot
               data={message.healthDataSnapshot}
               editable={true}
               onDataUpdate={onDataUpdate}
@@ -235,25 +241,8 @@ function MessageItem({
   );
 }
 
-/**
- * 空状态组件
- */
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-      <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
-        <Icon icon="healthicons:chat" className="w-8 h-8 text-emerald-400" />
-      </div>
-      <h3 className="text-lg font-medium text-white mb-2">开始健康对话</h3>
-      <p className="text-sm text-white/50 max-w-xs">
-        录入您的健康数据后，AI 将为您进行详细分析，您可以随时追问相关问题
-      </p>
-    </div>
-  );
-}
-
-export function HealthChatMessageList({ 
-  messages, 
+export function HealthChatMessageList({
+  messages,
   className,
   onDataUpdate,
   onDataSubmit,
@@ -297,14 +286,6 @@ export function HealthChatMessageList({
     }, 1000);
   }, []);
 
-  if (messages.length === 0) {
-    return (
-      <div className={cn("flex-1 flex items-center justify-center", className)}>
-        <EmptyState />
-      </div>
-    );
-  }
-
   return (
     <div className={cn("relative flex flex-col min-h-0", className)}>
       <div
@@ -313,7 +294,7 @@ export function HealthChatMessageList({
         className="chat-scroll flex-1 min-h-0 overflow-y-auto"
       >
         <div className="flex flex-col gap-4 p-4">
-          {messages.map((message) => (
+          {messages.filter(m => !m.hidden).map((message) => (
             <MessageItem
               key={message.id}
               message={message}
