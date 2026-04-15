@@ -15,6 +15,13 @@
       "when": 1774082551000,
       "tag": "0001_solid_community_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774342772594,
+      "tag": "0002_last_the_executioner",
+      "breakpoints": true
     }
   ]
 }
