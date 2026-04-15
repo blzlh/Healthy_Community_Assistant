@@ -3,12 +3,12 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { DbService } from '@/db/db.service';
 import { loginAttempts, ipBans, securityLogs, websocketEvents, apiAbuseEvents } from '@/db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
+import { ElkLoggerService } from './elk-logger.service';
 
 // Redis 键前缀
 const REDIS_PREFIX = {
@@ -47,6 +47,7 @@ export class SecurityService {
   constructor(
     private readonly configService: ConfigService,
     private readonly dbService: DbService,
+    private readonly elkLogger: ElkLoggerService,
   ) {
     // 初始化 Redis 连接
     this.redis = new Redis({
@@ -142,6 +143,16 @@ export class SecurityService {
         windowSeconds: BRUTE_FORCE_CONFIG.WINDOW_SECONDS,
         blockedDuration: BRUTE_FORCE_CONFIG.BLOCK_DURATION_SECONDS,
       },
+      actionTaken: 'blocked',
+    });
+
+    // 3. 推送到 ELK
+    this.elkLogger.logBruteForce({
+      ipAddress,
+      email,
+      attempts: BRUTE_FORCE_CONFIG.MAX_ATTEMPTS,
+      windowSeconds: BRUTE_FORCE_CONFIG.WINDOW_SECONDS,
+      blockedDuration: BRUTE_FORCE_CONFIG.BLOCK_DURATION_SECONDS,
       actionTaken: 'blocked',
     });
   }
@@ -549,6 +560,18 @@ export class SecurityService {
         },
         actionTaken: 'disconnected',
       });
+
+      // 5. 推送到 ELK
+      this.elkLogger.logWebSocketSpam({
+        socketId: params.socketId,
+        ipAddress: params.ipAddress,
+        userId: params.userId,
+        userName: params.userName,
+        messageCount: params.messageCount,
+        windowSeconds: SPAM_CONFIG.WINDOW_SECONDS,
+        cooldownSeconds: SPAM_CONFIG.COOLDOWN_SECONDS,
+        actionTaken: 'disconnected',
+      });
     } catch (error) {
       this.logger.error('Failed to handle spam detection:', error);
     }
@@ -781,6 +804,19 @@ export class SecurityService {
           duration: params.duration,
           rateLimitSeconds: API_ABUSE_CONFIG.RATE_LIMIT_SECONDS,
         },
+        actionTaken: 'rate_limited',
+      });
+
+      // 5. 推送到 ELK
+      this.elkLogger.logApiAbuse({
+        endpoint: params.endpoint,
+        method: params.method,
+        ipAddress: params.ipAddress,
+        userId: params.userId,
+        userName: params.userName,
+        qps: params.qps,
+        duration: params.duration,
+        rateLimitDuration: API_ABUSE_CONFIG.RATE_LIMIT_SECONDS,
         actionTaken: 'rate_limited',
       });
     } catch (error) {
