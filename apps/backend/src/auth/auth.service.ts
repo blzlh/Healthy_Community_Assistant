@@ -122,10 +122,10 @@ export class AuthService {
     if (userId) {
       const admin = getSupabaseAdminClient();
 
-      // 1. 先查询数据库中是否已有名字
+      // 1. 查询数据库中是否已有用户记录
       const { data: profileData, error: profileFetchError } = await admin
         .from('profiles')
-        .select('name')
+        .select('name, is_admin, email')
         .eq('user_id', userId)
         .single();
 
@@ -134,21 +134,37 @@ export class AuthService {
         throw profileFetchError;
       }
 
-      // 2. 决定最终的名字
-      // 优先级: 数据库中的名字 > 注册元数据中的名字 > 邮箱
-      const finalName = profileData?.name || name?.trim() || email;
+      // 2. 如果用户已存在，不更新 is_admin 字段（保留数据库中的值）
+      if (profileData) {
+        // 用户已存在，只更新基本信息，保留原有的 is_admin
+        const finalName = profileData.name || name?.trim() || email;
+        
+        // 只有当 name 或 email 有变化时才更新
+        if (profileData.name !== finalName || profileData.email !== email) {
+          const { error: profileError } = await admin
+            .from('profiles')
+            .update({
+              email,
+              name: finalName,
+              // 注意：不更新 is_admin，保留数据库中的值
+            })
+            .eq('user_id', userId);
 
-      const { error: profileError } = await admin.from('profiles').upsert(
-        {
+          if (profileError) throw profileError;
+        }
+      } else {
+        // 3. 如果用户不存在，创建新用户并设置默认值
+        const finalName = name?.trim() || email;
+        
+        const { error: profileError } = await admin.from('profiles').insert({
           user_id: userId,
           email,
           name: finalName,
-          is_admin: finalIsAdmin,
-        },
-        { onConflict: 'user_id' },
-      );
+          is_admin: finalIsAdmin, // 只有新用户才使用注册时设置的值
+        });
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
     }
 
     return data;

@@ -80,3 +80,47 @@ export const healthRecords = pgTable('health_records', {
   notes: text('notes'), // 备注
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+/**
+ * 登录尝试记录表 - 用于暴力破解检测
+ */
+export const loginAttempts = pgTable('login_attempts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  ipAddress: text('ip_address').notNull(),
+  email: text('email'),
+  success: boolean('success').default(false).notNull(),
+  failureReason: text('failure_reason'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+/**
+ * IP封禁记录表
+ */
+export const ipBans = pgTable('ip_bans', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  ipAddress: text('ip_address').notNull(),
+  reason: text('reason').notNull(),
+  bannedBy: uuid('banned_by'), // 管理员ID（可选，自动封禁时为null）
+  autoBlocked: boolean('auto_blocked').default(false).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }), // 过期时间，null表示永久封禁
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+/**
+ * 安全事件日志表
+ */
+export const securityLogs = pgTable('security_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  type: text('type').notNull(), // 'brute_force', 'api_abuse', 'spam', 'ip_blocked'
+  severity: text('severity').notNull(), // 'low', 'medium', 'high', 'critical'
+  ipAddress: text('ip_address'),
+  userId: uuid('user_id'),
+  endpoint: text('endpoint'),
+  details: json('details').$type<Record<string, any>>(),
+  actionTaken: text('action_taken'), // 'blocked', 'rate_limited', 'disconnected'
+  resolved: boolean('resolved').default(false).notNull(),
+  resolvedAt: timestamp('resolved_at', { mode: 'date' }),
+  resolvedBy: uuid('resolved_by'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});

@@ -9,6 +9,8 @@ export type Database = {
           avatar_url: string | null;
           created_at: string | null;
           updated_at: string | null;
+          is_admin: boolean;
+          is_banned: boolean;
         };
         Insert: {
           user_id: string;
@@ -17,6 +19,8 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          is_admin?: boolean;
+          is_banned?: boolean;
         };
         Update: {
           user_id?: string;
@@ -25,6 +29,8 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          is_admin?: boolean;
+          is_banned?: boolean;
         };
         Relationships: [];
       };

@@ -105,98 +105,96 @@ export default function LoginPage() {
       }
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
-          {step === "email" ? (
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email" className="text-zinc-300">
-                  邮箱
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@work-email.com"
-                  className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-500"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-zinc-300">登录身份</Label>
-                <div className="flex gap-4">
-                  <Button
-                    type="button"
-                    onClick={() => setIsAdmin(false)}
-                    className={`flex-1 h-10 transition-all ${
-                      !isAdmin
-                        ? "bg-white text-black hover:bg-zinc-200"
-                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+        {step === "email" ? (
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email" className="text-zinc-300">
+                邮箱
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@work-email.com"
+                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-500"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-zinc-300">登录身份</Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  onClick={() => setIsAdmin(false)}
+                  className={`flex-1 h-10 transition-all ${!isAdmin
+                    ? "bg-white text-black hover:bg-zinc-200"
+                    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
                     }`}
-                  >
-                    <Icon icon="lucide:user" className="h-4 w-4" />
-                    普通用户
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setIsAdmin(true)}
-                    className={`flex-1 h-10 transition-all ${
-                      isAdmin
-                        ? "bg-white text-black hover:bg-zinc-200"
-                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                >
+                  <Icon icon="lucide:user" className="h-4 w-4" />
+                  普通用户
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setIsAdmin(true)}
+                  className={`flex-1 h-10 transition-all ${isAdmin
+                    ? "bg-white text-black hover:bg-zinc-200"
+                    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
                     }`}
-                  >
-                    <Icon icon="lucide:shield-check" className="h-4 w-4" />
-                    管理员
-                  </Button>
-                </div>
+                >
+                  <Icon icon="lucide:shield-check" className="h-4 w-4" />
+                  管理员
+                </Button>
               </div>
             </div>
+          </div>
+        ) : null}
+        <div className="grid gap-3">
+          {step === "code" ? (
+            <>
+              <Label htmlFor="code" className="text-zinc-300">
+                验证码
+              </Label>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-4 py-4">
+                <OtpInput
+                  value={code}
+                  onChange={setCode}
+                  length={6}
+                  autoFocus
+                />
+              </div>
+              <div className="flex flex-row gap-3 rounded-xl py-2 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center">已发送验证码到 {email || "你的邮箱"}</div>
+                <Button
+                  type="button"
+                  disabled={resendLoading || !email}
+                  onClick={resendCode}
+                  className="h-8 w-auto rounded-lg border border-zinc-700 bg-zinc-950 text-xs text-white hover:bg-zinc-900"
+                >
+                  {resendLoading ? "发送中..." : "重新发送验证码"}
+                </Button>
+              </div>
+            </>
           ) : null}
-          <div className="grid gap-3">
-            {step === "code" ? (
-              <>
-                <Label htmlFor="code" className="text-zinc-300">
-                  验证码
-                </Label>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-4 py-4">
-                  <OtpInput
-                    value={code}
-                    onChange={setCode}
-                    length={6}
-                    autoFocus
-                  />
-                </div>
-                <div className="flex flex-row gap-3 rounded-xl py-2 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center">已发送验证码到 {email || "你的邮箱"}</div>
-                  <Button
-                    type="button"
-                    disabled={resendLoading || !email}
-                    onClick={resendCode}
-                    className="h-8 w-auto rounded-lg border border-zinc-700 bg-zinc-950 text-xs text-white hover:bg-zinc-900"
-                  >
-                    {resendLoading ? "发送中..." : "重新发送验证码"}
-                  </Button>
-                </div>
-              </>
-            ) : null}
-            <Button
-              type="submit"
-              disabled={loading || resendLoading}
-              className="h-11 w-full rounded-lg bg-white text-black hover:bg-zinc-200"
-            >
-              <Icon icon="material-symbols:mail-outline" className="h-4 w-4" />
-              {loading || resendLoading
-                ? step === "email"
-                  ? "发送中..."
-                  : resendLoading
+          <Button
+            type="submit"
+            disabled={loading || resendLoading}
+            className="h-11 w-full rounded-lg bg-white text-black hover:bg-zinc-200"
+          >
+            <Icon icon="material-symbols:mail-outline" className="h-4 w-4" />
+            {loading || resendLoading
+              ? step === "email"
+                ? "发送中..."
+                : resendLoading
                   ? "发送中..."
                   : "登录中..."
-                : step === "email"
+              : step === "email"
                 ? "发送验证码"
                 : "登录"}
-            </Button>
-          </div>
+          </Button>
+        </div>
       </form>
     </AuthCard>
   );
