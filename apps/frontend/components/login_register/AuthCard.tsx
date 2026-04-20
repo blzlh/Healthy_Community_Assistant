@@ -20,7 +20,7 @@ type AuthCardProps = {
 
 export function AuthCard({ title, description, icon, children, footer }: AuthCardProps) {
   return (
-    <Card className="w-full border-zinc-800 bg-zinc-950 text-white shadow-2xl">
+    <Card className="w-full border-zinc-800 bg-[#0A0A0A] text-white shadow-2xl">
       <CardHeader className="items-center gap-4 text-center">
         <HeaderIcon icon={icon} />
         <div className="space-y-1">

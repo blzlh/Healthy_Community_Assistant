@@ -38,10 +38,9 @@ export async function sendOtp(email: string, isAdmin: boolean = false) {
   return { data: response.data, status: response.status };
 }
 
-export async function sendLoginOtp(email: string, isAdmin: boolean = false) {
+export async function sendLoginOtp(email: string) {
   const response = await http.post<AuthResponse>("/api/auth/register", {
     email,
-    isAdmin,
     flow: "login",
   });
   return { data: response.data, status: response.status };
@@ -49,13 +48,11 @@ export async function sendLoginOtp(email: string, isAdmin: boolean = false) {
 
 export async function verifyOtp(
   email: string,
-  code: string,
-  isAdmin: boolean = false
+  code: string
 ) {
   const response = await http.post<AuthResponse>("/api/auth/login", {
     email,
     code,
-    isAdmin,
   });
   return { data: response.data, status: response.status };
 }

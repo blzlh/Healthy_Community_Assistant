@@ -50,12 +50,12 @@ export function useAuth() {
   );
 
   const sendLoginEmailOtp = useCallback(
-    async (email: string, isAdmin: boolean = false): Promise<AuthResult> => {
+    async (email: string): Promise<AuthResult> => {
       const normalizedEmail = normalizeEmail(email);
       setLoading(true);
       setMessage("");
       try {
-        const { data, status } = await sendLoginOtp(normalizedEmail, isAdmin);
+        const { data, status } = await sendLoginOtp(normalizedEmail);
         setMessage(`${status} ${JSON.stringify(data)}`);
         return { ok: true, status, data };
       } catch (error) {
@@ -70,12 +70,12 @@ export function useAuth() {
   );
 
   const resendEmailOtp = useCallback(
-    async (email: string, isAdmin: boolean = false): Promise<AuthResult> => {
+    async (email: string): Promise<AuthResult> => {
       const normalizedEmail = normalizeEmail(email);
       setResendLoading(true);
       setMessage("");
       try {
-        const { data, status } = await sendLoginOtp(normalizedEmail, isAdmin);
+        const { data, status } = await sendLoginOtp(normalizedEmail);
         setMessage(`${status} ${JSON.stringify(data)}`);
         return { ok: true, status, data };
       } catch (error) {
@@ -92,8 +92,7 @@ export function useAuth() {
   const confirmEmailOtp = useCallback(
     async (
       email: string,
-      code: string,
-      isAdmin: boolean = false
+      code: string
     ): Promise<AuthResult> => {
       const normalizedEmail = normalizeEmail(email);
       const normalizedCode = normalizeCode(code);
@@ -102,8 +101,7 @@ export function useAuth() {
       try {
         const { data, status } = await verifyOtp(
           normalizedEmail,
-          normalizedCode,
-          isAdmin
+          normalizedCode
         );
         // 只有当 session 存在时才算登录成功
         if (data?.session?.access_token) {

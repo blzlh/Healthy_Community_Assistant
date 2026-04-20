@@ -5,9 +5,36 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { useMemo, useState } from "react";
 import { Avatar, Button, Dropdown } from "antd";
+import type { MenuProps } from "antd";
 
 import { useAuthStore } from "@/store/auth-store";
 import { UserProfileModal } from "@/components/management/UserProfileModal";
+
+// 菜单项配置
+const menuConfig = {
+  base: [
+    { key: "edit", icon: "solar:pen-bold", label: "编辑资料" },
+    { key: "healthRecords", icon: "solar:health-bold", label: "健康档案" },
+  ],
+  admin: [
+    { key: "admin", icon: "solar:users-group-rounded-bold", label: "管理后台" },
+    { key: "security", icon: "solar:shield-check-bold", label: "安全管理" },
+  ],
+  logout: { key: "logout", icon: "solar:logout-2-bold", label: "退出登录", isLogout: true as const },
+};
+
+type MenuItemConfig = typeof menuConfig.base[number] | typeof menuConfig.logout;
+
+// 生成菜单项
+const createMenuItem = (item: MenuItemConfig) => ({
+  key: item.key,
+  label: (
+    <span className={`flex items-center gap-4 ${'isLogout' in item && item.isLogout ? "text-red-400" : "text-white/80"}`}>
+      <Icon icon={item.icon} className="h-4 w-4" />
+      {item.label}
+    </span>
+  ),
+});
 
 export function HomeAuthActions() {
   const router = useRouter();
@@ -17,38 +44,51 @@ export function HomeAuthActions() {
   const isAuthed = Boolean(token) && Boolean(user);
   const [open, setOpen] = useState(false);
 
-  const userMenuItems = useMemo(() => {
-    const items = [
-      { key: "edit", label: "编辑资料" },
-      { key: "profile", label: "个人健康中心" },
+  const userMenuItems = useMemo((): MenuProps['items'] => {
+    const items: MenuProps['items'] = [
+      ...menuConfig.base.map(createMenuItem),
     ];
 
     if (user?.isAdmin) {
-      items.push({ key: "admin", label: "用户管理" });
+      items.push(...menuConfig.admin.map(createMenuItem));
     }
 
-    items.push({ key: "logout", label: "退出登录" });
+    items.push({ type: 'divider' });
+    items.push(createMenuItem(menuConfig.logout));
+
     return items;
   }, [user?.isAdmin]);
 
+  const handleMenuClick = (key: string) => {
+    const routes: Record<string, string> = {
+      healthRecords: "/healthRecords",
+      admin: "/admin/users",
+      security: "/admin/security",
+    };
+
+    if (key === "logout") {
+      clear();
+      router.push("/");
+    } else if (key === "edit") {
+      setOpen(true);
+    } else if (routes[key]) {
+      router.push(routes[key]);
+    }
+  };
+
   if (!isAuthed) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Link href="/auth/login">
           <Button
-            color="default"
-            variant="filled"
-            className="!bg-zinc-600 !text-white hover:!bg-zinc-500"
+            type="text"
+            className="!border-2 !border-[#292929] !text-white hover:!text-white hover:!bg-white/10 hover:!border-white/30 hover:!scale-105 !rounded-lg !h-9 transition-all"
           >
             登录
           </Button>
         </Link>
         <Link href="/auth/register">
-          <Button
-            color="default"
-            variant="filled"
-            className="!bg-zinc-600 !text-white hover:!bg-zinc-500"
-          >
+          <Button className="!border-2 !border-[#292929] !bg-white !text-black hover:!bg-white/80 hover:!border-white/30 hover:!scale-105 !rounded-lg !h-9 !font-medium transition-all">
             注册
           </Button>
         </Link>
@@ -56,69 +96,41 @@ export function HomeAuthActions() {
     );
   }
 
-  const displayName = user?.name ?? user?.email;
-  const displayEmail = user?.email ?? "未绑定邮箱";
+  const displayName = user?.name || user?.email?.split("@")[0] || "用户";
 
   return (
     <>
       <Dropdown
         menu={{
           items: userMenuItems,
-          theme: "dark",
-          className: "!bg-black/90 !text-white/80",
-          onClick: ({ key }) => {
-            if (key === "logout") {
-              clear();
-            }
-            if (key === "edit") {
-              setOpen(true);
-            }
-            if (key === "admin") {
-              router.push("/admin/users");
-            }
-          },
+          onClick: ({ key }) => handleMenuClick(key),
+          className: "[&_.ant-dropdown-menu-item]:!bg-transparent [&_.ant-dropdown-menu-item:hover]:!bg-white/5 [&_.ant-dropdown-menu-item]:!rounded-lg [&_.ant-dropdown-menu-item]:!border-b-0 [&_.ant-dropdown-menu-item]:!my-0 [&_.ant-dropdown-menu-item]:!mx-0 [&_.ant-dropdown-menu-item]:!px-3",
         }}
-        styles={{
-          root: {
-            backgroundColor: "#131212",
-            border: "1px solid rgba(255,255,255,0.10)",
-            borderRadius: 12,
-          },
-          item: {
-            color: "rgba(255,255,255,0.88)",
-          },
-          itemTitle: {
-            color: "rgba(255,255,255,0.95)",
-          },
-        }}
+        trigger={["click"]}
         popupRender={(menu) => (
-          <>
-            <div className="rounded-xl border border-white/10 bg-black/90 p-2 shadow-xl [&_.ant-dropdown-menu-item]:rounded-lg [&_.ant-dropdown-menu-item:hover]:!bg-white/10 [&_.ant-dropdown-menu-item:hover]:!text-white">
-              {menu}
-            </div>
-          </>
+          <div className="rounded-xl border border-white/10 bg-zinc-900 backdrop-blur-xl shadow-xl [&_.ant-dropdown-menu]:!bg-transparent [&_.ant-dropdown-menu-item-divider]:!bg-white/10">
+            {menu}
+          </div>
         )}
-
       >
         <button
           type="button"
-          className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-white/90 hover:bg-white/10"
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors cursor-pointer"
         >
-          <Avatar className="bg-zinc-700" size={36} src={user?.avatarUrl}>
-            {(displayName || "U").slice(0, 1).toUpperCase()}
+          <Avatar
+            className="bg-white text-black"
+            size={28}
+            src={user?.avatarUrl}
+          >
+            {displayName.slice(0, 1).toUpperCase()}
           </Avatar>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium">{displayName}</span>
-              {user?.isAdmin && (
-                <span className="inline-flex items-center rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
-                  管理员
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] text-white/50">{displayEmail}</span>
-          </div>
-          <Icon icon="material-symbols:keyboard-arrow-down" className="h-4 w-4" />
+          <span className="hidden sm:block text-sm font-medium text-white">{displayName}</span>
+          {user?.isAdmin && (
+            <span className="hidden md:inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400">
+              管理员
+            </span>
+          )}
+          <Icon icon="solar:alt-arrow-down-bold" className="h-4 w-4 text-white/40" />
         </button>
       </Dropdown>
       <UserProfileModal open={open} onClose={() => setOpen(false)} />

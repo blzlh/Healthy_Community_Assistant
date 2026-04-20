@@ -45,7 +45,7 @@ export default function RegisterPage() {
         <>
           <div className="text-sm text-zinc-400">
             已有账号？{" "}
-            <Link className="text-white underline-offset-4 hover:underline" href="/auth/login">
+            <Link className="!text-white !underline-offset-4 hover:!underline decoration-white" href="/auth/login">
               去登录
             </Link>
           </div>
