@@ -47,7 +47,7 @@ export function ChatMessageList() {
   }, []);
 
   return (
-    <div className="relative h-[520px] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div className="relative h-full overflow-hidden">
       <div
         ref={containerRef}
         onScroll={handleScroll}

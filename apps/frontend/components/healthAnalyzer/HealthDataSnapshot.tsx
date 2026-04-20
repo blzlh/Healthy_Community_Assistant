@@ -11,7 +11,7 @@ import { HealthFormData, HealthFieldConfig } from "./types";
 import { cn } from "@/lib/utils";
 
 /**
- * 健康指标字段配置
+ * 健康指标字段配置 - 使用 Solar 图标
  */
 const HEALTH_FIELDS: HealthFieldConfig[] = [
 	{
@@ -19,7 +19,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "血压",
 		placeholder: "如: 120/80",
 		unit: "mmHg",
-		icon: "healthicons:blood-pressure",
+		icon: "solar:heart-pulse-bold",
 		iconColor: "text-red-400",
 	},
 	{
@@ -27,7 +27,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "心率",
 		placeholder: "如: 72",
 		unit: "次/分钟",
-		icon: "lucide:heart-pulse",
+		icon: "solar:heart-bold",
 		iconColor: "text-pink-400",
 	},
 	{
@@ -35,7 +35,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "空腹血糖",
 		placeholder: "如: 5.5",
 		unit: "mmol/L",
-		icon: "lucide:droplet",
+		icon: "solar:dropper-bold",
 		iconColor: "text-blue-400",
 	},
 	{
@@ -43,7 +43,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "体重",
 		placeholder: "如: 70",
 		unit: "kg",
-		icon: "healthicons:weight",
+		icon: "solar:scale-bold",
 		iconColor: "text-amber-400",
 	},
 	{
@@ -51,7 +51,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "身高",
 		placeholder: "如: 175",
 		unit: "cm",
-		icon: "healthicons:body",
+		icon: "solar:ruler-bold",
 		iconColor: "text-emerald-400",
 	},
 	{
@@ -59,7 +59,7 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
 		label: "年龄",
 		placeholder: "如: 30",
 		unit: "岁",
-		icon: "healthicons:calendar",
+		icon: "solar:calendar-bold",
 		iconColor: "text-purple-400",
 	},
 ];
@@ -127,7 +127,7 @@ export function HealthDataSnapshot({
 			<form onSubmit={handleSubmit} className="mb-3 pb-3 border-b border-white/10">
 				<div className="flex items-center justify-between mb-2">
 					<div className="flex items-center gap-1.5">
-						<Icon icon="healthicons:clipboard-list" className="w-3.5 h-3.5 text-white/50" />
+						<Icon icon="solar:document-text-bold" className="w-3.5 h-3.5 text-white/50" />
 						<span className="text-xs text-white/50">编辑健康数据</span>
 					</div>
 					<div className="flex items-center gap-1">
@@ -135,7 +135,7 @@ export function HealthDataSnapshot({
 							type="button"
 							size="xs"
 							onClick={handleCancelEdit}
-							className="!text-white/40 hover:!text-white/60"
+							className="!text-white/40 hover:!text-white/60 !bg-transparent"
 						>
 							取消
 						</Button>
@@ -143,7 +143,7 @@ export function HealthDataSnapshot({
 							type="submit"
 							size="xs"
 							disabled={loading}
-							className="!bg-sky-600 !text-white hover:!bg-sky-500"
+							className="!bg-white !text-black hover:!bg-white/90 !rounded-lg"
 						>
 							{loading ? "提交中..." : "提交分析"}
 						</Button>
@@ -159,7 +159,7 @@ export function HealthDataSnapshot({
 								value={editData[field.name]}
 								onChange={handleInputChange}
 								placeholder={field.placeholder}
-								className="flex-1 min-w-0 rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder:text-white/30 focus:border-sky-500/50 focus:outline-none"
+								className="flex-1 min-w-0 rounded border border-white/10 bg-black/30 px-2 py-1 text-xs text-white placeholder:text-white/30 focus:border-sky-500/50 focus:outline-none"
 							/>
 						</div>
 					))}
@@ -173,7 +173,7 @@ export function HealthDataSnapshot({
 		<div className="mb-3 pb-3 border-b border-white/10">
 			<div className="flex items-center justify-between mb-2">
 				<div className="flex items-center gap-1.5">
-					<Icon icon="healthicons:clipboard-list" className="w-3.5 h-3.5 text-white/50" />
+					<Icon icon="solar:document-text-bold" className="w-3.5 h-3.5 text-white/50" />
 					<span className="text-xs text-white/50">本次分析数据</span>
 				</div>
 				{editable && (
@@ -181,9 +181,9 @@ export function HealthDataSnapshot({
 						type="button"
 						size="xs"
 						onClick={handleStartEdit}
-						className="!text-sky-400 hover:!text-sky-300"
+						className="!text-sky-400 hover:!text-sky-300 !bg-transparent"
 					>
-						<Icon icon="lucide:edit-2" className="w-3 h-3 mr-1" />
+						<Icon icon="solar:pen-bold" className="w-3 h-3 mr-1" />
 						修改
 					</Button>
 				)}
@@ -192,7 +192,7 @@ export function HealthDataSnapshot({
 				{filledFields.map((field) => (
 					<div
 						key={field.name}
-						className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/10"
+						className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gradient-to-br from-white/5 to-transparent border border-white/10"
 					>
 						<Icon icon={field.icon} className={cn("w-3.5 h-3.5", field.iconColor)} />
 						<span className="text-xs text-white/60">{field.label}:</span>

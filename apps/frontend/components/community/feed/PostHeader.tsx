@@ -88,7 +88,7 @@ export function PostHeader({
         {isOwnPost && (
           <Link
             href={`/community/edit/${postId}`}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white active:scale-90"
+            className="flex h-8 w-8 items-center justify-center rounded-full !bg-white/10 !text-white/60 transition-all hover:!bg-white/20 hover:!text-white active:scale-90"
             title="编辑动态"
           >
             <Icon icon="material-symbols:edit-outline" className="h-4 w-4" />

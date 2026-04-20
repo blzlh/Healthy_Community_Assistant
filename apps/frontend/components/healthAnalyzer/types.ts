@@ -54,6 +54,8 @@ export interface HealthFieldConfig {
   unit: string;
   icon: string;
   iconColor: string;
+  /** 渐变背景样式 */
+  gradient?: string;
 }
 
 /**

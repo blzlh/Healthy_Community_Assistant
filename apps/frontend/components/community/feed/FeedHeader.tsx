@@ -19,7 +19,7 @@ export function FeedHeader({
         <div className="text-lg font-semibold text-white">社区动态</div>
         <Link
           href="/community/new"
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/10 !bg-zinc-800 px-4 py-2 text-sm !text-white hover:!bg-zinc-700"
         >
           <Icon icon="material-symbols:add" className="h-4 w-4" />
           写动态

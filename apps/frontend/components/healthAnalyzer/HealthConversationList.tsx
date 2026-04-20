@@ -135,10 +135,10 @@ export function HealthConversationList({
       <Button
         onClick={onNewConversation}
         className={cn(
-          "w-full mb-3 !bg-sky-600 !text-white hover:!bg-sky-500"
+          "w-full mb-3 !bg-white !text-black hover:!bg-white/90 !rounded-lg !font-medium"
         )}
       >
-        <Icon icon="lucide:plus" className="w-4 h-4 mr-1.5" />
+        <Icon icon="solar:add-circle-bold" className="w-4 h-4 mr-1.5" />
         新建对话
       </Button>
 
@@ -182,7 +182,7 @@ export function HealthConversationList({
                   )}
                   title="删除对话"
                 >
-                  <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                  <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
                 </Button>
               </div>
             ))}

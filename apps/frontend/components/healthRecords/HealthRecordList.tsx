@@ -51,12 +51,12 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 const DATA_FIELDS = [
-  { key: "bloodPressure", label: "血压", unit: "mmHg", icon: "healthicons:blood-pressure", color: "text-red-400" },
-  { key: "heartRate", label: "心率", unit: "次/分", icon: "lucide:heart-pulse", color: "text-pink-400" },
-  { key: "bloodSugar", label: "血糖", unit: "mmol/L", icon: "lucide:droplet", color: "text-blue-400" },
-  { key: "weight", label: "体重", unit: "kg", icon: "healthicons:weight", color: "text-amber-400" },
-  { key: "height", label: "身高", unit: "cm", icon: "healthicons:body", color: "text-emerald-400" },
-  { key: "age", label: "年龄", unit: "岁", icon: "healthicons:calendar", color: "text-purple-400" },
+  { key: "bloodPressure", label: "血压", unit: "mmHg", icon: "solar:heart-pulse-bold", gradient: "from-red-500/20 to-red-500/5", iconColor: "text-red-400" },
+  { key: "heartRate", label: "心率", unit: "次/分", icon: "solar:heart-bold", gradient: "from-pink-500/20 to-pink-500/5", iconColor: "text-pink-400" },
+  { key: "bloodSugar", label: "血糖", unit: "mmol/L", icon: "solar:dropper-bold", gradient: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-400" },
+  { key: "weight", label: "体重", unit: "kg", icon: "solar:scale-bold", gradient: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-400" },
+  { key: "height", label: "身高", unit: "cm", icon: "solar:ruler-bold", gradient: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-400" },
+  { key: "age", label: "年龄", unit: "岁", icon: "solar:calendar-bold", gradient: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-400" },
 ] as const;
 
 export function HealthRecordList({
@@ -93,15 +93,15 @@ export function HealthRecordList({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/10 bg-white/5 overflow-hidden flex flex-col",
+        "rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent overflow-hidden flex flex-col",
         className
       )}
     >
       {/* 头部 */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
-            <Icon icon="lucide:history" className="w-4 h-4 text-amber-400" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/5 border border-amber-500/20 flex items-center justify-center">
+            <Icon icon="solar:history-bold" className="w-4 h-4 text-amber-400" />
           </div>
           <span className="font-medium text-white">历史记录</span>
         </div>
@@ -125,7 +125,7 @@ export function HealthRecordList({
                 <div className="flex-1 min-w-0">
                   {/* 时间 */}
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-white/40" />
+                    <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5 text-white/40" />
                     <span className="text-xs text-white/50">
                       {formatRelativeTime(record.createdAt)}
                     </span>
@@ -136,9 +136,12 @@ export function HealthRecordList({
                     {dataFields.map((field) => (
                       <div
                         key={field.key}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/30 border border-white/5"
+                        className={cn(
+                          "flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/5",
+                          `bg-gradient-to-br ${field.gradient}`
+                        )}
                       >
-                        <Icon icon={field.icon} className={cn("w-3.5 h-3.5", field.color)} />
+                        <Icon icon={field.icon} className={cn("w-3.5 h-3.5", field.iconColor)} />
                         <span className="text-xs text-white/60">{field.label}:</span>
                         <span className="text-xs font-medium text-white">
                           {record[field.key as keyof HealthRecord]}
@@ -151,7 +154,7 @@ export function HealthRecordList({
                   {/* 备注 */}
                   {record.notes && (
                     <div className="mt-2 flex items-start gap-1.5">
-                      <Icon icon="lucide:file-text" className="w-3.5 h-3.5 text-white/40 mt-0.5" />
+                      <Icon icon="solar:document-text-bold" className="w-3.5 h-3.5 text-white/40 mt-0.5" />
                       <span className="text-xs text-white/50">{record.notes}</span>
                     </div>
                   )}
@@ -164,10 +167,10 @@ export function HealthRecordList({
                       type="text"
                       size="small"
                       onClick={() => onEdit(record)}
-                      className="!text-white/50 hover:!text-white hover:!bg-white/10"
+                      className="!text-white/50 hover:!text-white hover:!bg-white/10 !rounded-lg"
                       title="编辑"
                     >
-                      <Icon icon="lucide:pencil" className="w-4 h-4" />
+                      <Icon icon="solar:pen-bold" className="w-4 h-4" />
                     </Button>
                   )}
                   {onDelete && (
@@ -182,10 +185,10 @@ export function HealthRecordList({
                       <Button
                         type="text"
                         size="small"
-                        className="!text-white/50 hover:!text-red-400 hover:!bg-white/10"
+                        className="!text-white/50 hover:!text-red-400 hover:!bg-white/10 !rounded-lg"
                         title="删除"
                       >
-                        <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                        <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
                       </Button>
                     </Popconfirm>
                   )}

@@ -8,6 +8,7 @@ import { Spin, Modal } from "antd";
 import { Icon } from "@iconify/react";
 import { Toast } from "@/components/ui/Toast/Toast";
 import { useAuthStore } from "@/store/auth-store";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function CommunityEditPage() {
   const params = useParams();
@@ -109,37 +110,66 @@ export default function CommunityEditPage() {
 
   if (!hydrated || loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Spin size="large" />
-      </main>
+      <div className="h-screen bg-black text-white antialiased overflow-hidden flex flex-col">
+        <PageHeader
+          title="编辑动态"
+          icon="solar:pen-bold"
+          iconColor="text-purple-400"
+          iconBgGradient="from-purple-500/20 to-purple-500/5"
+          backHref="/community"
+        />
+        <main className="flex-1 flex items-center justify-center">
+          <Spin size="large" />
+        </main>
+      </div>
     );
   }
 
   if (!post) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold">动态不存在或无权编辑</h2>
-        </div>
-      </main>
+      <div className="h-screen bg-black text-white antialiased overflow-hidden flex flex-col">
+        <PageHeader
+          title="编辑动态"
+          icon="solar:pen-bold"
+          iconColor="text-purple-400"
+          iconBgGradient="from-purple-500/20 to-purple-500/5"
+          backHref="/community"
+        />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold">动态不存在或无权编辑</h2>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-4xl px-6 py-10">
-        <CommunityComposer
-          postId={postId}
-          initialData={{
-            contentJson: post.contentJson,
-            contentText: post.contentText,
-            images: post.images,
-          }}
-          showDeleteButton
-          isDeleting={isDeleting}
-          onDelete={handleDelete}
-        />
-      </div>
-    </main>
+    <div className="h-screen bg-black text-white antialiased overflow-hidden flex flex-col">
+      <PageHeader
+        title="编辑动态"
+        icon="solar:pen-bold"
+        iconColor="text-purple-400"
+        iconBgGradient="from-purple-500/20 to-purple-500/5"
+        backHref="/community"
+      />
+      <main className="flex-1 overflow-y-auto home-scroll">
+        <div className="mx-auto w-[96%] bg-[#0A0A0A] border border-[#292929] rounded-md mb-4">
+          <div className="p-6">
+            <CommunityComposer
+              postId={postId}
+              initialData={{
+                contentJson: post.contentJson,
+                contentText: post.contentText,
+                images: post.images,
+              }}
+              showDeleteButton
+              isDeleting={isDeleting}
+              onDelete={handleDelete}
+            />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

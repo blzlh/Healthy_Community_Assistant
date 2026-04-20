@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { HealthFormData } from "./types";
 import { HealthDataPanel } from "./HealthDataPanel";
-import { HealthAnalyzerHeader } from "./HealthAnalyzerHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useHealthStore } from "@/store/health-store";
 
 export function HealthAnalyzerContainer() {
@@ -90,30 +90,77 @@ export function HealthAnalyzerContainer() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <HealthAnalyzerHeader />
-
-      <HealthDataPanel
-        formData={formData}
-        onInputChange={handleInputChange}
-        onSubmit={handleSubmit}
-        onReset={handleReset}
-        loading={loading}
-        collapsed={false}
+    <div className="flex flex-col h-full">
+      <PageHeader
+        title="健康数据分析"
+        description="录入健康数据，获取 AI 分析报告"
+        icon="solar:health-bold"
+        iconColor="text-emerald-400"
+        iconBgGradient="from-emerald-500/20 to-emerald-500/5"
+        backHref="/healthAnalyzer"
       />
 
-      {/* 温馨提示 */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
-            <Icon icon="healthicons:info" className="w-4 h-4 text-sky-400" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-white mb-1">温馨提示</h4>
+      <div className="flex-1 flex gap-4 min-h-0 p-4 bg-[#0A0A0A] border border-[#292929] rounded-md mx-4 mb-4">
+        <div className="flex-1 flex flex-col">
+          <HealthDataPanel
+            formData={formData}
+            onInputChange={handleInputChange}
+            onSubmit={handleSubmit}
+            onReset={handleReset}
+            loading={loading}
+            collapsed={false}
+            className="flex-1"
+          />
+        </div>
+
+        {/* 右侧：说明信息 */}
+        <div className="w-80 flex-shrink-0 hidden lg:flex flex-col gap-4">
+          {/* 功能说明 */}
+          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/20 to-sky-500/5 border border-sky-500/20 flex items-center justify-center">
+                <Icon icon="solar:stethoscope-bold" className="w-4 h-4 text-sky-400" />
+              </div>
+              <h4 className="text-sm font-medium text-white">AI 智能分析</h4>
+            </div>
             <p className="text-xs text-white/60 leading-relaxed">
               录入您的健康数据后，AI 将为您提供个性化的健康分析和建议。
-              分析完成后，您可以继续追问相关问题，AI 会结合您的数据进行深入解答。
             </p>
+          </div>
+
+          {/* 温馨提示 */}
+          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <Icon icon="solar:info-circle-bold" className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-white mb-1">温馨提示</h4>
+                <p className="text-xs text-white/60 leading-relaxed">
+                  分析完成后，您可以继续追问相关问题，AI 会结合您的数据进行深入解答。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 数据安全 */}
+          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Icon icon="solar:shield-check-bold" className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-white mb-1">数据安全</h4>
+                <p className="text-xs text-white/60 leading-relaxed">
+                  您的健康数据仅用于本次分析，不会被存储或分享给第三方。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 底部提示 */}
+          <div className="mt-auto text-xs text-white/40 text-center">
+            AI 分析结果仅供参考，如有不适请及时就医
           </div>
         </div>
       </div>

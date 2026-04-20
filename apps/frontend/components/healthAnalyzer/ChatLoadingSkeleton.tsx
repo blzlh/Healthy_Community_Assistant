@@ -33,8 +33,8 @@ function MessageSkeleton({ isUser }: { isUser: boolean }) {
           <Skeleton.Avatar active size={32} shape="circle" />
         </div>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/20 border border-emerald-500/30">
-          <Icon icon="healthicons:ai" className="w-4 h-4 text-emerald-400" />
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-sky-500/20 to-sky-500/5 border border-sky-500/20">
+          <Icon icon="solar:stethoscope-bold" className="w-4 h-4 text-sky-400" />
         </div>
       )}
 
@@ -51,8 +51,8 @@ function MessageSkeleton({ isUser }: { isUser: boolean }) {
           className={cn(
             "rounded-2xl px-4 py-3",
             isUser
-              ? "w-fit w-[40%] bg-sky-500/20 border border-sky-500/30 rounded-tr-none"
-              : "w-full max-w-[90%] bg-white/5 border border-white/10 rounded-tl-none"
+              ? "w-fit w-[40%] bg-gradient-to-br from-sky-500/20 to-sky-500/5 border border-sky-500/20 rounded-tr-none"
+              : "w-full max-w-[90%] bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-tl-none"
           )}
         >
           <Skeleton

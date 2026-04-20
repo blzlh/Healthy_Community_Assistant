@@ -114,19 +114,19 @@ export function CommunityComposer({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+    <section className="rounded-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-white">
+          <div className="text-lg font-semibold text-white">
             {postId ? "编辑动态" : "写动态"}
-          </h1>
-          <p className="mt-1 text-xs text-white/50">
+          </div>
+          <div className="mt-1 text-xs text-white/50">
             发布身份：{(user?.name ?? user?.email ?? "匿名用户").trim()}
-          </p>
+          </div>
         </div>
         <Link
           href="/community"
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/10 !bg-white/5 px-3 py-2 text-sm !text-white/80 hover:!bg-white/10"
         >
           <Icon icon="material-symbols:arrow-back" className="h-4 w-4" />
           返回动态

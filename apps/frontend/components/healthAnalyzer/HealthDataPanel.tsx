@@ -26,7 +26,7 @@ interface HealthDataPanelProps {
 }
 
 /**
- * 健康指标字段配置
+ * 健康指标字段配置 - 使用 Solar 图标库
  */
 const HEALTH_FIELDS: HealthFieldConfig[] = [
   {
@@ -34,48 +34,54 @@ const HEALTH_FIELDS: HealthFieldConfig[] = [
     label: "血压",
     placeholder: "如: 120/80",
     unit: "mmHg",
-    icon: "healthicons:blood-pressure",
+    icon: "solar:heart-pulse-bold",
     iconColor: "text-red-400",
+    gradient: "from-red-500/20 to-red-500/5",
   },
   {
     name: "heartRate",
     label: "心率",
     placeholder: "如: 72",
     unit: "次/分钟",
-    icon: "lucide:heart-pulse",
+    icon: "solar:heart-bold",
     iconColor: "text-pink-400",
+    gradient: "from-pink-500/20 to-pink-500/5",
   },
   {
     name: "bloodSugar",
     label: "空腹血糖",
     placeholder: "如: 5.5",
     unit: "mmol/L",
-    icon: "lucide:droplet",
+    icon: "solar:dropper-bold",
     iconColor: "text-blue-400",
+    gradient: "from-blue-500/20 to-blue-500/5",
   },
   {
     name: "weight",
     label: "体重",
     placeholder: "如: 70",
     unit: "kg",
-    icon: "healthicons:weight",
+    icon: "solar:scale-bold",
     iconColor: "text-amber-400",
+    gradient: "from-amber-500/20 to-amber-500/5",
   },
   {
     name: "height",
     label: "身高",
     placeholder: "如: 175",
     unit: "cm",
-    icon: "healthicons:body",
+    icon: "solar:ruler-bold",
     iconColor: "text-emerald-400",
+    gradient: "from-emerald-500/20 to-emerald-500/5",
   },
   {
     name: "age",
     label: "年龄",
     placeholder: "如: 30",
     unit: "岁",
-    icon: "healthicons:calendar",
+    icon: "solar:calendar-bold",
     iconColor: "text-purple-400",
+    gradient: "from-purple-500/20 to-purple-500/5",
   },
 ];
 
@@ -96,8 +102,8 @@ function CollapsedPreview({
   return (
     <div className="p-3 flex items-center justify-between">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center shrink-0">
-          <Icon icon="healthicons:clipboard-text" className="w-4 h-4 text-sky-400" />
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/20 to-sky-500/5 border border-sky-500/20 flex items-center justify-center shrink-0">
+          <Icon icon="solar:document-text-bold" className="w-4 h-4 text-sky-400" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -127,7 +133,7 @@ function CollapsedPreview({
         className="shrink-0 !text-white/60 hover:!text-white"
         title="展开数据面板"
       >
-        <Icon icon="lucide:chevron-down" className="w-5 h-5" />
+        <Icon icon="solar:alt-arrow-down-bold" className="w-5 h-5" />
       </Button>
     </div>
   );
@@ -160,7 +166,7 @@ export function HealthDataPanel({
     return (
       <div
         className={cn(
-          "rounded-xl border border-white/10 bg-white/5",
+          "rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent",
           className
         )}
       >
@@ -178,14 +184,14 @@ export function HealthDataPanel({
     return (
       <div
         className={cn(
-          "rounded-xl border border-white/10 bg-white/5 overflow-hidden",
+          "rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent overflow-hidden",
           className
         )}
       >
         {/* 头部 */}
         <div className="flex items-center justify-between p-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <Icon icon="healthicons:clipboard-text" className="w-4 h-4 text-sky-400" />
+            <Icon icon="solar:document-text-bold" className="w-4 h-4 text-sky-400" />
             <span className="text-sm font-medium text-white">健康数据</span>
           </div>
           <Button
@@ -194,7 +200,7 @@ export function HealthDataPanel({
             className="!text-white/60 hover:!text-white"
             title="收起数据面板"
           >
-            <Icon icon="lucide:chevron-up" className="w-4 h-4" />
+            <Icon icon="solar:alt-arrow-up-bold" className="w-4 h-4" />
           </Button>
         </div>
 
@@ -225,7 +231,7 @@ export function HealthDataPanel({
               <Button
                 type="default"
                 onClick={onReset}
-                className="flex-1 h-9 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20"
+                className="flex-1 h-9 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20 !rounded-lg"
               >
                 清空
               </Button>
@@ -235,7 +241,7 @@ export function HealthDataPanel({
               htmlType="submit"
               disabled={loading}
               loading={loading}
-              className="flex-1 h-9 !bg-zinc-800 !text-white hover:!bg-zinc-700 disabled:!opacity-50"
+              className="flex-1 h-9 !bg-white !text-black hover:!bg-white/90 disabled:!opacity-50 !rounded-lg !font-medium"
             >
               {loading ? "分析中..." : "开始分析"}
             </Button>
@@ -249,14 +255,14 @@ export function HealthDataPanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/10 bg-white/5 overflow-hidden flex flex-col",
+        "rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent overflow-hidden flex flex-col",
         className
       )}
     >
       {/* 头部 */}
       <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
-          <Icon icon="healthicons:clipboard-text" className="w-5 h-5 text-sky-400" />
+          <Icon icon="solar:document-text-bold" className="w-5 h-5 text-sky-400" />
           <span className="font-medium text-white">数据录入</span>
         </div>
         <span className="text-xs text-white/40">至少填写一项</span>
@@ -268,7 +274,10 @@ export function HealthDataPanel({
           {HEALTH_FIELDS.map((field) => (
             <div
               key={field.name}
-              className="rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-white/20"
+              className={cn(
+                "rounded-lg border border-white/10 p-3 transition-colors hover:border-white/20",
+                `bg-gradient-to-br ${field.gradient}`
+              )}
             >
               <div className="flex items-center gap-2 mb-2">
                 <Icon icon={field.icon} className={cn("w-4 h-4", field.iconColor)} />
@@ -293,7 +302,7 @@ export function HealthDataPanel({
             htmlType="submit"
             disabled={loading}
             loading={loading}
-            className="flex-1 h-11 !bg-zinc-800 !text-white hover:!bg-zinc-700 disabled:!opacity-50"
+            className="flex-1 h-11 !bg-white !text-black hover:!bg-white/90 disabled:!opacity-50 !rounded-lg !font-medium"
           >
             {loading ? "分析中..." : "开始 AI 分析"}
           </Button>
@@ -301,7 +310,7 @@ export function HealthDataPanel({
             <Button
               type="default"
               onClick={onReset}
-              className="h-11 px-4 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20"
+              className="h-11 px-4 !bg-white/5 !text-white/80 !border-white/10 hover:!bg-white/10 hover:!border-white/20 !rounded-lg"
             >
               重置
             </Button>

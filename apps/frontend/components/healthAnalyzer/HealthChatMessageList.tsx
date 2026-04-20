@@ -201,8 +201,8 @@ function MessageItem({
           className={cn(
             "rounded-2xl px-4 py-2 text-sm text-white border",
             isUser
-              ? "w-fit max-w-[70%] whitespace-pre-wrap break-words bg-sky-500/20 border-sky-500/30 rounded-tr-none"
-              : "w-full bg-white/5 border-white/10 rounded-tl-none"
+              ? "w-fit max-w-[70%] whitespace-pre-wrap break-words bg-gradient-to-br from-sky-500/20 to-sky-500/5 border-sky-500/20 rounded-tr-none"
+              : "w-full bg-gradient-to-br from-white/5 to-transparent border-white/10 rounded-tl-none"
           )}
         >
           {/* 健康数据快照（仅首条 AI 消息显示） */}

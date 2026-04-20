@@ -5,5 +5,5 @@
 export { HealthRecordForm } from "./HealthRecordForm";
 export { HealthChart } from "./HealthChart";
 export { HealthRecordList } from "./HealthRecordList";
-export { HealthRecordsContainer } from "./HealthRecordsContainer";
+export { HealthRecordsContent } from "./HealthRecordsContent";
 export * from "./types";

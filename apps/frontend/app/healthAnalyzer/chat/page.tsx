@@ -2,14 +2,23 @@
  * 普通对话模式页面 - 自由对话
  */
 
-import { HealthChatContainer } from "@/components/healthAnalyzer";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HealthChatContent } from "@/components/healthAnalyzer";
 
 export default function HealthChatPage() {
   return (
-    <main className="h-screen bg-black text-white overflow-hidden">
-      <div className="mx-auto w-full max-w-4xl px-6 py-6 h-full">
-        <HealthChatContainer mode="chat" />
+    <div className="h-screen bg-black text-white antialiased overflow-hidden flex flex-col">
+      <PageHeader
+        title="自由对话"
+        icon="solar:chat-round-dots-bold"
+        iconColor="text-sky-400"
+        backHref="/healthAnalyzer"
+      />
+      <div className="flex-1 overflow-hidden">
+        <div className="mx-auto w-[96%] h-full pb-4">
+          <HealthChatContent mode="chat" />
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

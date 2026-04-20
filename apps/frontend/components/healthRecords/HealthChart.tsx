@@ -200,15 +200,15 @@ export function HealthChart({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/10 bg-white/5 overflow-hidden flex flex-col",
+        "rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent overflow-hidden flex flex-col",
         className
       )}
     >
       {/* 头部 */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-            <Icon icon="lucide:line-chart" className="w-4 h-4 text-emerald-400" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center">
+            <Icon icon="solar:chart-2-bold" className="w-4 h-4 text-emerald-400" />
           </div>
           <span className="font-medium text-white">数据趋势</span>
         </div>
@@ -271,7 +271,7 @@ export function HealthChart({
           </div>
         ) : (
           <div className="h-[280px] flex flex-col items-center justify-center text-white/40">
-            <Icon icon="lucide:bar-chart-2" className="w-12 h-12 mb-2 opacity-50" />
+            <Icon icon="solar:chart-2-bold" className="w-12 h-12 mb-2 opacity-50" />
             <span className="text-sm">暂无{currentConfig.label}数据</span>
             <span className="text-xs mt-1">添加记录后即可查看趋势图</span>
           </div>

@@ -1,5 +1,5 @@
 /**
- * 健康对话容器组件 - 支持两种模式
+ * 健康对话内容组件 - 不包含 Header，由页面层控制
  * 
  * mode="chat" - 普通对话模式，直接对话（也可接收从 analysis 跳转来的健康数据）
  * mode="analysis" - 健康数据分析模式，需要先录入数据
@@ -8,7 +8,6 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { useHealthAnalysis } from "@/hooks/useHealthAnalysis";
 import { useHealthConversation } from "@/hooks/use-health-conversation";
@@ -16,18 +15,15 @@ import { HealthFormData, ChatMessage } from "./types";
 import { HealthDataPanel } from "./HealthDataPanel";
 import { HealthChatMessageList } from "./HealthChatMessageList";
 import { HealthChatComposer, parseSuggestedQuestions } from "./HealthChatComposer";
-import { HealthAnalyzerHeader } from "./HealthAnalyzerHeader";
 import { HealthConversationList } from "./HealthConversationList";
 import { ChatLoadingSkeleton } from "./ChatLoadingSkeleton";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/shadcn/button";
 import { useAuthStore } from "@/store/auth-store";
 import { useHealthStore } from "@/store/health-store";
-import { BackToHome } from "@/components/BackToHome";
 
 type HealthChatMode = "chat" | "analysis";
 
-interface HealthChatContainerProps {
+interface HealthChatContentProps {
   mode: HealthChatMode;
 }
 
@@ -45,7 +41,7 @@ function formDataToApiData(formData: HealthFormData) {
   };
 }
 
-export function HealthChatContainer({ mode }: HealthChatContainerProps) {
+export function HealthChatContent({ mode }: HealthChatContentProps) {
   // 使用重构后的 hooks
   const {
     analyze,
@@ -101,6 +97,27 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
   const pendingAbortControllerRef = useRef<AbortController | null>(null);
 
   /**
+   * 当 mode 变化时，重置状态
+   * 这确保从 chat 切换到 analysis（或反之）时，不会显示上一个模式的数据
+   */
+  useEffect(() => {
+    // 重置消息和会话状态
+    reset();
+    resetConversation();
+    setChatStarted(false);
+    setFormData({
+      bloodPressure: "",
+      heartRate: "",
+      bloodSugar: "",
+      weight: "",
+      height: "",
+      age: "",
+    });
+    hasProcessedPendingRef.current = false;
+    setProcessingPending(false);
+  }, [mode, reset, resetConversation]);
+
+  /**
    * 处理从 analysis 页面跳转来的健康数据
    */
   useEffect(() => {
@@ -112,12 +129,12 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
       setFormData(pendingHealthData);
       setProcessingPending(true);
       useHealthStore.setState({ loading: true });
-      
+
       const processPendingData = async () => {
         // 创建 AbortController 用于中断请求
         const abortController = new AbortController();
         pendingAbortControllerRef.current = abortController;
-        
+
         try {
           if (!token) {
             console.error("用户未登录");
@@ -139,7 +156,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
 
           // 生成消息 ID
           const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-          
+
           // 用户消息（隐藏，不渲染）
           const userMessageId = generateId();
           const fieldNames: Record<string, string> = {
@@ -155,10 +172,10 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
             .map(([k, v]) => `${fieldNames[k] || k}: ${v}`)
             .join('、');
           const displayContent = dataPreview || '健康数据分析';
-          
+
           // AI 消息占位
           const aiMessageId = generateId();
-          
+
           // 立即添加消息（用户消息隐藏）
           useHealthStore.setState((state) => ({
             messages: [
@@ -171,7 +188,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
           // 创建新对话
           const result = await startNewConversation();
           if (abortController.signal.aborted) return;
-          
+
           if (!result.ok || !result.conversationId) {
             console.error("创建对话失败:", result.message);
             clearPendingHealthData();
@@ -530,27 +547,11 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
     return parseSuggestedQuestions(lastAiMessage.content);
   }, [messages]);
 
-  // 模式标签
-  const modeLabel = isAnalysisMode ? "健康数据分析" : "自由对话";
-  const modeIcon = isAnalysisMode ? "lucide:heart-pulse" : "lucide:message-circle";
-  const modeColor = isAnalysisMode ? "text-emerald-400" : "text-sky-400";
-
   // ============ Analysis 模式：初始状态显示数据录入表单 ============
   if (isAnalysisMode && messages.length === 0 && !loading) {
     return (
-      <div className="flex flex-col h-full">
-        {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between gap-3 shrink-0">
-          <HealthAnalyzerHeader
-            title={modeLabel}
-            icon={modeIcon}
-            iconColor={modeColor}
-          />
-          <BackToHome />
-        </div>
-
-        {/* 主内容区 */}
-        <div className="flex gap-4 flex-1 min-h-0 mt-4">
+      <div className="h-full bg-[#0A0A0A] border border-[#292929] rounded-md overflow-hidden">
+        <div className="flex gap-4 h-full p-4">
           {/* 左侧：数据录入 */}
           <div className="flex-1 flex flex-col">
             <HealthDataPanel
@@ -563,82 +564,20 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
               className="flex-1"
             />
           </div>
-
-          {/* 右侧：说明信息 */}
-          <div className="w-80 flex-shrink-0 hidden lg:flex flex-col gap-4">
-            {/* 功能说明 */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                  <Icon icon="lucide:heart-pulse" className="w-4 h-4 text-emerald-400" />
-                </div>
-                <h4 className="text-sm font-medium text-white">健康数据分析</h4>
-              </div>
-              <p className="text-xs text-white/60 leading-relaxed">
-                录入您的血压、心率、血糖等健康指标，AI 将为您提供个性化的健康分析和建议。
-              </p>
-            </div>
-
-            {/* 温馨提示 */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
-                  <Icon icon="healthicons:info" className="w-4 h-4 text-sky-400" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-white mb-1">温馨提示</h4>
-                  <p className="text-xs text-white/60 leading-relaxed">
-                    分析完成后，您可以继续追问相关问题，AI 会结合您的数据进行深入解答。
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 数据安全 */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                  <Icon icon="lucide:shield-check" className="w-4 h-4 text-purple-400" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-white mb-1">数据安全</h4>
-                  <p className="text-xs text-white/60 leading-relaxed">
-                    您的健康数据仅用于本次分析，不会被存储或分享给第三方。
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 底部提示 */}
-            <div className="mt-auto text-xs text-white/40 text-center">
-              AI 分析结果仅供参考，如有不适请及时就医
-            </div>
-          </div>
         </div>
       </div>
     );
   }
 
   // ============ Chat 模式：初始状态显示欢迎信息 ============
-  // 只有在 chat 模式下，没有开始对话，没有正在处理的数据，没有消息，且没有加载时才显示欢迎界面
   if (isChatMode && !chatStarted && !processingPending && messages.length === 0 && !loading && !loadingConversation) {
     return (
-      <div className="flex flex-col h-full">
-        {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between gap-3 shrink-0">
-          <HealthAnalyzerHeader
-            title={modeLabel}
-            icon={modeIcon}
-            iconColor={modeColor}
-          />
-          <BackToHome />
-        </div>
-
-        <div className="flex gap-4 flex-1 min-h-0 mt-4">
+      <div className="h-full bg-[#0A0A0A] border border-[#292929] rounded-md overflow-hidden">
+        <div className="flex gap-4 h-full p-4">
           {/* 左侧：对话列表 */}
           {showConversationList && (
             <div className="w-64 flex-shrink-0 hidden lg:block">
-              <div className="h-full rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="h-full rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-3">
                 <HealthConversationList
                   currentConversationId={currentConversationId}
                   onSelectConversation={handleSelectConversation}
@@ -652,9 +591,9 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
           {/* 右侧：欢迎界面 */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* 欢迎信息 */}
-            <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 p-8">
-              <div className="w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center mb-4">
-                <Icon icon="lucide:message-circle" className="w-8 h-8 text-sky-400" />
+            <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500/20 to-sky-500/5 border border-sky-500/20 flex items-center justify-center mb-4">
+                <Icon icon="solar:chat-round-dots-bold" className="w-8 h-8 text-sky-400" />
               </div>
               <h2 className="text-xl font-semibold mb-2">开始健康对话</h2>
               <p className="text-sm text-white/60 text-center max-w-md mb-6">
@@ -672,7 +611,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
                     key={question}
                     variant="outline"
                     onClick={() => handleSendMessage(question)}
-                    className="!rounded-full !border-white/20 !bg-white/5 !text-white/80 hover:!bg-white/10 hover:!border-white/30 hover:!text-white"
+                    className="!rounded-full !border-white/10 !bg-white/5 !text-white/80 hover:!bg-white/10 hover:!border-white/20 hover:!text-white"
                   >
                     {question}
                   </Button>
@@ -681,7 +620,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
             </div>
 
             {/* 输入框 */}
-            <div className="mt-2 p-4 rounded-xl border border-white/10 bg-white/5">
+            <div className="mt-2 p-4 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
               <HealthChatComposer
                 onSend={handleSendMessage}
                 onAbort={handleAbort}
@@ -700,21 +639,12 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
 
   // ============ 对话状态（两种模式共用） ============
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between gap-3 shrink-0">
-        <HealthAnalyzerHeader
-          title={modeLabel}
-          icon={modeIcon}
-          iconColor={modeColor}
-        />
-        <BackToHome />
-      </div>
-      <div className="flex gap-4 flex-1 min-h-0 mt-4">
-
+    <div className="h-full bg-[#0A0A0A] border border-[#292929] rounded-md overflow-hidden">
+      <div className="flex gap-4 h-full p-4">
         {/* 左侧：对话列表 */}
         {showConversationList && (
           <div className="w-64 flex-shrink-0 hidden lg:block">
-            <div className="h-full rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="h-full rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-3">
               <HealthConversationList
                 currentConversationId={currentConversationId}
                 onSelectConversation={handleSelectConversation}
@@ -729,13 +659,13 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
         <div className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
           {/* 对话消息列表 / 加载骨架屏 */}
           {loadingConversation ? (
-            <div className="flex-1 min-h-0 rounded-xl border border-white/10 bg-white/5 overflow-y-auto">
+            <div className="flex-1 min-h-0 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent overflow-y-auto">
               <ChatLoadingSkeleton count={3} />
             </div>
           ) : (
             <HealthChatMessageList
               messages={messages}
-              className="flex-1 min-h-0 rounded-xl border border-white/10 bg-white/5"
+              className="flex-1 min-h-0 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent"
               onDataUpdate={handleDataUpdate}
               onDataSubmit={handleDataSubmit}
               loading={processingPending || loading}
@@ -752,7 +682,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
           )}
 
           {/* 对话输入 */}
-          <div className="mt-2 p-4 rounded-xl border border-white/10 bg-white/5">
+          <div className="mt-2 p-4 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
             <HealthChatComposer
               onSend={handleSendMessage}
               onAbort={handleAbort}
@@ -766,7 +696,7 @@ export function HealthChatContainer({ mode }: HealthChatContainerProps) {
       </div>
 
       {/* 提示文字 */}
-      <div className="text-xs text-white/40 text-center mt-3 shrink-0">
+      <div className="text-xs text-white/40 text-center p-3 shrink-0">
         AI 分析结果仅供参考，如有不适请及时就医
       </div>
     </div>

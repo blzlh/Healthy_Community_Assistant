@@ -2,8 +2,8 @@
  * 健康分析组件导出
  */
 
-// 容器
-export { HealthChatContainer } from "./HealthChatContainer";
+// 内容组件（由页面层级控制 Header）
+export { HealthChatContent } from "./HealthChatContent";
 
 // 头部
 export { HealthAnalyzerHeader } from "./HealthAnalyzerHeader";

@@ -8,9 +8,8 @@ import { PostCard } from "@/components/community/feed/PostCard";
 import { useCommunity } from "@/hooks/use-community";
 import { useAuthStore } from "@/store/auth-store";
 import { CommunityFeedSkeleton } from "@/components/community/feed/CommunityFeedSkeleton";
-import { BackToHome } from "@/components/BackToHome";
 
-export function CommunityFeed() {
+export function CommunityContent() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const user = useAuthStore((state) => state.user);
@@ -97,7 +96,7 @@ export function CommunityFeed() {
 
   if (!hydrated) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white">
+      <div className="p-4 text-white">
         正在加载登录状态...
       </div>
     );
@@ -105,7 +104,7 @@ export function CommunityFeed() {
 
   if (!token) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white">
+      <div className="p-4 text-white">
         <div className="text-base font-semibold">请先登录后查看社区动态</div>
         <Link href="/auth/login" className="mt-2 inline-block text-sm text-white/70 underline">
           前往登录
@@ -115,53 +114,42 @@ export function CommunityFeed() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* 顶部：标题和返回主页 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">社区动态</h1>
-          <p className="text-sm text-white/60 mt-1">分享健康心得，交流生活经验</p>
+    <div className="p-4">
+      <FeedHeader scope={scope} onScopeChange={setScope} />
+
+      {loading ? (
+        <CommunityFeedSkeleton />
+      ) : visiblePosts.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/20 py-10 text-center text-sm text-white/60">
+          暂无动态，发布第一条内容吧
         </div>
-        <BackToHome />
-      </div>
-
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <FeedHeader scope={scope} onScopeChange={setScope} />
-
-        {loading ? (
-          <CommunityFeedSkeleton />
-        ) : visiblePosts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/20 py-10 text-center text-sm text-white/60">
-            暂无动态，发布第一条内容吧
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {visiblePosts.map((post) => {
-              const isOwnPost = user?.id === post.author.id;
-              const isCommentsOpen = Boolean(openComments[post.id]);
-              const commentText = commentTextByPost[post.id] ?? "";
-              const submitting = Boolean(commentSubmitting[post.id]);
-              return (
-                <div key={post.id}>
-                  <PostCard
-                    post={post}
-                    isOwnPost={isOwnPost}
-                    isCommentsOpen={isCommentsOpen}
-                    commentText={commentText}
-                    commentSubmitting={submitting}
-                    onToggleLike={() => handleToggleLike(post.id)}
-                    onToggleComments={() => handleToggleComments(post.id)}
-                    onChangeCommentText={(value) =>
-                      setCommentTextByPost((prev) => ({ ...prev, [post.id]: value }))
-                    }
-                    onSubmitComment={() => handleSubmitComment(post.id)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      ) : (
+        <div className="flex flex-col gap-4 mt-4">
+          {visiblePosts.map((post) => {
+            const isOwnPost = user?.id === post.author.id;
+            const isCommentsOpen = Boolean(openComments[post.id]);
+            const commentText = commentTextByPost[post.id] ?? "";
+            const submitting = Boolean(commentSubmitting[post.id]);
+            return (
+              <div key={post.id}>
+                <PostCard
+                  post={post}
+                  isOwnPost={isOwnPost}
+                  isCommentsOpen={isCommentsOpen}
+                  commentText={commentText}
+                  commentSubmitting={submitting}
+                  onToggleLike={() => handleToggleLike(post.id)}
+                  onToggleComments={() => handleToggleComments(post.id)}
+                  onChangeCommentText={(value) =>
+                    setCommentTextByPost((prev) => ({ ...prev, [post.id]: value }))
+                  }
+                  onSubmitComment={() => handleSubmitComment(post.id)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
