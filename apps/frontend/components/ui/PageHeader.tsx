@@ -4,6 +4,7 @@
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,12 @@ export function PageHeader({
   showBackButton = true,
   className,
 }: PageHeaderProps) {
+  const router = useRouter();
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
     <div
       className={cn(
@@ -46,11 +53,11 @@ export function PageHeader({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {/* Logo / 返回按钮 */}
+          {/* Logo - 点击回到首页 */}
           {showBackButton && (
             <>
               <Link
-                href={backHref}
+                href="/home"
                 className="flex items-center gap-2.5 !text-white no-underline hover:opacity-80 transition-opacity"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-black">
@@ -61,7 +68,7 @@ export function PageHeader({
             </>
           )}
 
-          {/* 页面图标和标题 */}
+          {/* 页面标题 */}
           <div>
             <div className="text-lg font-semibold leading-tight text-white">
               {title}
@@ -72,8 +79,19 @@ export function PageHeader({
           </div>
         </div>
 
-        {/* 右侧额外内容 */}
-        {rightContent && <div className="flex items-center gap-2">{rightContent}</div>}
+        {/* 右侧：返回按钮 + 额外内容 */}
+        <div className="flex items-center gap-3 cursor-pointer">
+          {rightContent}
+          {showBackButton && (
+            <button
+              onClick={handleGoBack}
+              className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-all text-sm"
+            >
+              <Icon icon="solar:arrow-left-bold" className="h-4 w-4" />
+              <span>返回</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
